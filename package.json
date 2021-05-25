@@ -1,0 +1,20 @@
+{
+  "name": "spinal-env-viewer-plugin-network-tree-service",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "rm -fr dist && tsc",
+    "dev": "rm -fr dist && tsc --watch & nodemon dist"
+  },
+  "dependencies": {
+    "spinal-model-bmsnetwork": "git+https://github.com/spinalcom/spinal-model-bmsnetwork.git",
+    "spinal-env-viewer-graph-service": "git+https://github.com/spinalcom/Spinal-Graph-Service.git",
+    "spinal-env-viewer-plugin-forge": "git+https://github.com/spinalcom/spinal-env-viewer-plugin-forge.git",
+    "spinal-env-viewer-plugin-device_profile": "git+https://github.com/spinalcom/spinal-env-viewer-plugin-device_profile.git",
+    "spinal-env-viewer-plugin-documentation-service": "git+https://github.com/spinalcom/spinal-env-viewer-plugin-documentation-service.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

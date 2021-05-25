@@ -1,0 +1,9 @@
+export declare const CONTEXT_TYPE: string;
+export declare const NETWORK_TYPE: string;
+export declare const NETWORK_RELATION: string;
+export declare const PLC_ATTR: string;
+export declare const OBJECT_ATTR: string;
+export declare const ATTRIBUTE_CATEGORY: string;
+export declare const NETWORK_BIMOJECT_RELATION: string;
+export declare const AUTOMATES_TO_PROFILE_RELATION: string;
+export declare const OBJECT_TO_BACNET_ITEM_RELATION: string;
