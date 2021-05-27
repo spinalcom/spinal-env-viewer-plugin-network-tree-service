@@ -1,5 +1,6 @@
+import "spinal-env-viewer-plugin-forge";
 import { INodeInfoOBJ } from "../data/Interfaces";
-export default class GenerateNetworkTree {
+export default class GenerateNetworkTreeService {
     static getElementProperties(items: {
         model: any;
         selection: Number[];
@@ -47,4 +48,4 @@ export default class GenerateNetworkTree {
     private static _getpropertyValue;
     private static _addSpinalAttribute;
 }
-export { GenerateNetworkTree };
+export { GenerateNetworkTreeService };

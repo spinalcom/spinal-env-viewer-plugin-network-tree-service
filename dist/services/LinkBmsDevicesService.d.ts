@@ -1,5 +1,5 @@
 import { INodeInfoOBJ } from "../data/Interfaces";
-export default class LinkBmsDevice {
+export default class LinkBmsDeviceService {
     static LinkBmsDeviceToBimDevices(bmsContextId: string, bmsDeviceId: string, bimDeviceId: string): Promise<void>;
     static unLinkBmsDeviceToBimDevices(bmsContextId: string, bmsDeviceId: string, bimDeviceId: string): Promise<void>;
     static linkProfilToBmsDevice(bmsContextId: string, bmsDeviceId: string, profilId: string): Promise<void>;
@@ -9,4 +9,4 @@ export default class LinkBmsDevice {
     private static _getAutomateItems;
     private static bmsDevicehasBimDevice;
 }
-export { LinkBmsDevice };
+export { LinkBmsDeviceService };

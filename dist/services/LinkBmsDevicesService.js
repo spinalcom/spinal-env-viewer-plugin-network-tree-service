@@ -9,13 +9,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.LinkBmsDevice = void 0;
-const LinkNetworTreeService_1 = require("./LinkNetworTreeService");
+exports.LinkBmsDeviceService = void 0;
+const LinkNetworkTreeService_1 = require("./LinkNetworkTreeService");
 const spinal_env_viewer_graph_service_1 = require("spinal-env-viewer-graph-service");
 const spinal_model_bmsnetwork_1 = require("spinal-model-bmsnetwork");
 const constants_1 = require("../data/constants");
 const DeviceProfileUtilities_1 = require("../utilities/DeviceProfileUtilities");
-class LinkBmsDevice {
+class LinkBmsDeviceService {
     static LinkBmsDeviceToBimDevices(bmsContextId, bmsDeviceId, bimDeviceId) {
         return __awaiter(this, void 0, void 0, function* () {
             const profilId = yield this._getBacnetProfilLinked(bimDeviceId);
@@ -141,7 +141,7 @@ class LinkBmsDevice {
     }
     static _getAutomateItems(automateId) {
         const bimDeviceMap = new Map();
-        return LinkNetworTreeService_1.LinkNetworkTreeService.getDeviceAndProfilData(automateId).then((result) => {
+        return LinkNetworkTreeService_1.LinkNetworkTreeService.getDeviceAndProfilData(automateId).then((result) => {
             const promises = result.valids.map(({ automateItem, profileItem }) => __awaiter(this, void 0, void 0, function* () {
                 const attrs = yield DeviceProfileUtilities_1.default.getItemIO(profileItem.id);
                 for (const attr of attrs) {
@@ -163,6 +163,6 @@ class LinkBmsDevice {
         });
     }
 }
-exports.default = LinkBmsDevice;
-exports.LinkBmsDevice = LinkBmsDevice;
-//# sourceMappingURL=LinkBmsDevices.js.map
+exports.default = LinkBmsDeviceService;
+exports.LinkBmsDeviceService = LinkBmsDeviceService;
+//# sourceMappingURL=LinkBmsDevicesService.js.map

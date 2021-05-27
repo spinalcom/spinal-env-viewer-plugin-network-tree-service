@@ -1,15 +1,17 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.networkTreeService = exports.linkNetworkTreeService = exports.linkBmsDevice = exports.generateNetworkTree = exports.NetworkTreeService = exports.LinkNetworkTreeService = exports.LinkBmsDevice = exports.GenerateNetworkTree = exports.CONSTANTS = void 0;
-const GenerateNetworkTree_1 = require("./services/GenerateNetworkTree");
-Object.defineProperty(exports, "GenerateNetworkTree", { enumerable: true, get: function () { return GenerateNetworkTree_1.GenerateNetworkTree; } });
-const LinkBmsDevices_1 = require("./services/LinkBmsDevices");
-Object.defineProperty(exports, "LinkBmsDevice", { enumerable: true, get: function () { return LinkBmsDevices_1.LinkBmsDevice; } });
-const LinkNetworTreeService_1 = require("./services/LinkNetworTreeService");
-Object.defineProperty(exports, "LinkNetworkTreeService", { enumerable: true, get: function () { return LinkNetworTreeService_1.LinkNetworkTreeService; } });
+exports.deviceProfileUtilities = exports.DeviceProfileUtilities = exports.networkTreeService = exports.linkNetworkTreeService = exports.linkBmsDeviceService = exports.generateNetworkTreeService = exports.NetworkTreeService = exports.LinkNetworkTreeService = exports.LinkBmsDeviceService = exports.GenerateNetworkTreeService = exports.CONSTANTS = void 0;
+const GenerateNetworkTreeService_1 = require("./services/GenerateNetworkTreeService");
+Object.defineProperty(exports, "GenerateNetworkTreeService", { enumerable: true, get: function () { return GenerateNetworkTreeService_1.GenerateNetworkTreeService; } });
+const LinkBmsDevicesService_1 = require("./services/LinkBmsDevicesService");
+Object.defineProperty(exports, "LinkBmsDeviceService", { enumerable: true, get: function () { return LinkBmsDevicesService_1.LinkBmsDeviceService; } });
+const LinkNetworkTreeService_1 = require("./services/LinkNetworkTreeService");
+Object.defineProperty(exports, "LinkNetworkTreeService", { enumerable: true, get: function () { return LinkNetworkTreeService_1.LinkNetworkTreeService; } });
 const NetworkTreeService_1 = require("./services/NetworkTreeService");
 Object.defineProperty(exports, "NetworkTreeService", { enumerable: true, get: function () { return NetworkTreeService_1.NetworkTreeService; } });
 const constants_1 = require("./data/constants");
+const DeviceProfileUtilities_1 = require("./utilities/DeviceProfileUtilities");
+Object.defineProperty(exports, "DeviceProfileUtilities", { enumerable: true, get: function () { return DeviceProfileUtilities_1.DeviceProfileUtilities; } });
 const CONSTANTS = {
     CONTEXT_TYPE: constants_1.CONTEXT_TYPE,
     NETWORK_TYPE: constants_1.NETWORK_TYPE,
@@ -22,12 +24,14 @@ const CONSTANTS = {
     OBJECT_TO_BACNET_ITEM_RELATION: constants_1.OBJECT_TO_BACNET_ITEM_RELATION
 };
 exports.CONSTANTS = CONSTANTS;
-const generateNetworkTree = GenerateNetworkTree_1.GenerateNetworkTree;
-exports.generateNetworkTree = generateNetworkTree;
-const linkBmsDevice = LinkBmsDevices_1.LinkBmsDevice;
-exports.linkBmsDevice = linkBmsDevice;
-const linkNetworkTreeService = LinkNetworTreeService_1.LinkNetworkTreeService;
+const generateNetworkTreeService = GenerateNetworkTreeService_1.GenerateNetworkTreeService;
+exports.generateNetworkTreeService = generateNetworkTreeService;
+const linkBmsDeviceService = LinkBmsDevicesService_1.LinkBmsDeviceService;
+exports.linkBmsDeviceService = linkBmsDeviceService;
+const linkNetworkTreeService = LinkNetworkTreeService_1.LinkNetworkTreeService;
 exports.linkNetworkTreeService = linkNetworkTreeService;
 const networkTreeService = NetworkTreeService_1.NetworkTreeService;
 exports.networkTreeService = networkTreeService;
+const deviceProfileUtilities = DeviceProfileUtilities_1.DeviceProfileUtilities;
+exports.deviceProfileUtilities = deviceProfileUtilities;
 //# sourceMappingURL=index.js.map

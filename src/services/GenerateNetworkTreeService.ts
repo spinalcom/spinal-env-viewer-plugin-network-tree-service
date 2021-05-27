@@ -1,19 +1,22 @@
 
+import "spinal-env-viewer-plugin-forge";
+
 import { bimObjectManagerService } from "spinal-env-viewer-bim-manager-service";
 import { SpinalGraphService, SPINAL_RELATION_PTR_LST_TYPE } from "spinal-env-viewer-graph-service";
 import { serviceDocumentation } from "spinal-env-viewer-plugin-documentation-service";
 import { NETWORK_BIMOJECT_RELATION, NETWORK_TYPE, OBJECT_ATTR, PLC_ATTR, ATTRIBUTE_CATEGORY, NETWORK_RELATION } from "../data/constants";
-import { SpinalForgeViewer } from "spinal-env-viewer-plugin-forge";
 import { NetworkTreeService } from "./NetworkTreeService";
 
-import _ from 'lodash';
+import * as _ from 'lodash';
 import Utilities from "../utilities/utilities";
 import { INodeInfoOBJ } from "../data/Interfaces";
 
 
-const spinalForgeViewer = new SpinalForgeViewer();
+// const spinalForgeViewer = new SpinalForgeViewer();
+const g_win: any = typeof window === "undefined" ? global : window;
+const bimObjectService = g_win.spinal.BimObjectService;
 
-export default class GenerateNetworkTree {
+export default class GenerateNetworkTreeService {
 
 
    public static async getElementProperties(items: { model: any; selection: Number[] } | Array<{ model: any; selection: Number[] }>, attributeName: string, namingConventionConfig: {
@@ -203,9 +206,11 @@ export default class GenerateNetworkTree {
    }
 
    private static async _createBimObjectNode({ dbId, model, color, isAutomate }) {
+
       const elements = await this._getBimObjectName({ dbId, model })
       const element = elements[0];
-      return spinalForgeViewer.bimObjectService.createBIMObject(element.dbId, element.name, model).then((node) => {
+
+      return bimObjectService.createBIMObject(element.dbId, element.name, model).then((node) => {
          const nodeId = node.id ? node.id.get() : node.info.id.get();
          const realNode = SpinalGraphService.getRealNode(nodeId);
 
@@ -351,5 +356,5 @@ export default class GenerateNetworkTree {
 }
 
 export {
-   GenerateNetworkTree
+   GenerateNetworkTreeService
 }

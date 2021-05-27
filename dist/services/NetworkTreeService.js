@@ -10,12 +10,15 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.NetworkTreeService = void 0;
-const spinal_env_viewer_plugin_forge_1 = require("spinal-env-viewer-plugin-forge");
+require("spinal-env-viewer-plugin-forge");
 const spinal_env_viewer_graph_service_1 = require("spinal-env-viewer-graph-service");
 const constants_1 = require("../data/constants");
 const Constants_1 = require("spinal-env-viewer-plugin-forge/dist/Constants");
+const spinal_core_connectorjs_type_1 = require("spinal-core-connectorjs_type");
 const utilities_1 = require("../utilities/utilities");
-const spinalForgeViewer = new spinal_env_viewer_plugin_forge_1.SpinalForgeViewer();
+// const spinalForgeViewer = new SpinalForgeViewer();
+const g_win = typeof window === "undefined" ? global : window;
+const bimObjectService = g_win.spinal.BimObjectService;
 class NetworkTreeService {
     static createNetworkContext(name) {
         return spinal_env_viewer_graph_service_1.SpinalGraphService.addContext(name, constants_1.CONTEXT_TYPE);
@@ -24,7 +27,7 @@ class NetworkTreeService {
         let network = spinal_env_viewer_graph_service_1.SpinalGraphService.createNode({
             name,
             type: constants_1.NETWORK_TYPE
-        }, new spinal.Model());
+        }, new spinal_core_connectorjs_type_1.Model());
         return spinal_env_viewer_graph_service_1.SpinalGraphService.addChildInContext(parentId, network, contextId, constants_1.NETWORK_RELATION, spinal_env_viewer_graph_service_1.SPINAL_RELATION_PTR_LST_TYPE);
     }
     static addBimObject(contextId, parentId, bimObjectList) {
@@ -35,7 +38,7 @@ class NetworkTreeService {
                 propFilter: ['name']
             }, (el) => {
                 el.forEach(element => {
-                    spinalForgeViewer.bimObjectService.createBIMObject(element.dbId, element.name, model).then(bimObject => {
+                    bimObjectService.createBIMObject(element.dbId, element.name, model).then(bimObject => {
                         let BimObjectId = bimObject.info ? bimObject.info.id.get() : bimObject.id.get();
                         promises.push(spinal_env_viewer_graph_service_1.SpinalGraphService.addChildInContext(parentId, BimObjectId, contextId, constants_1.NETWORK_BIMOJECT_RELATION, spinal_env_viewer_graph_service_1.SPINAL_RELATION_PTR_LST_TYPE));
                     });

@@ -1,14 +1,17 @@
-import { SpinalForgeViewer } from "spinal-env-viewer-plugin-forge";
+import "spinal-env-viewer-plugin-forge";
 import { SpinalContext, SpinalGraphService, SpinalNode, SPINAL_RELATION_PTR_LST_TYPE } from 'spinal-env-viewer-graph-service';
 import { NETWORK_RELATION, CONTEXT_TYPE, NETWORK_TYPE, NETWORK_BIMOJECT_RELATION, AUTOMATES_TO_PROFILE_RELATION, OBJECT_TO_BACNET_ITEM_RELATION } from '../data/constants';
 import { IDataFormated, INodeInfoOBJ } from "../data/Interfaces";
 import { BIM_OBJECT_TYPE } from "spinal-env-viewer-plugin-forge/dist/Constants";
 
+import { Model } from "spinal-core-connectorjs_type";
+
 import Utilities from "../utilities/utilities";
 
 
-const spinalForgeViewer = new SpinalForgeViewer();
-
+// const spinalForgeViewer = new SpinalForgeViewer();
+const g_win: any = typeof window === "undefined" ? global : window;
+const bimObjectService = g_win.spinal.BimObjectService;
 
 export default class NetworkTreeService {
 
@@ -20,7 +23,7 @@ export default class NetworkTreeService {
       let network = SpinalGraphService.createNode({
          name,
          type: NETWORK_TYPE
-      }, new spinal.Model())
+      }, new Model())
 
       return SpinalGraphService.addChildInContext(parentId, network, contextId,
          NETWORK_RELATION,
@@ -41,7 +44,7 @@ export default class NetworkTreeService {
          }, (el) => {
 
             el.forEach(element => {
-               spinalForgeViewer.bimObjectService.createBIMObject(element.dbId, element.name, model).then(bimObject => {
+               bimObjectService.createBIMObject(element.dbId, element.name, model).then(bimObject => {
                   let BimObjectId = bimObject.info ? bimObject.info.id.get() : bimObject.id.get();
 
                   promises.push(SpinalGraphService.addChildInContext(parentId, BimObjectId, contextId, NETWORK_BIMOJECT_RELATION, SPINAL_RELATION_PTR_LST_TYPE));

@@ -1,3 +1,4 @@
+import "spinal-env-viewer-plugin-forge";
 import { SpinalContext, SpinalNode } from 'spinal-env-viewer-graph-service';
 import { INodeInfoOBJ } from "../data/Interfaces";
 export default class NetworkTreeService {

@@ -1,10 +1,13 @@
 import { SpinalGraphService, SPINAL_RELATION_PTR_LST_TYPE } from 'spinal-env-viewer-graph-service';
 import { DeviceProfileUtilities } from "../utilities/DeviceProfileUtilities";
 import { IDataFormated, INodeInfoOBJ } from "../data/Interfaces";
-import { NETWORK_BIMOJECT_RELATION, AUTOMATES_TO_PROFILE_RELATION, OBJECT_TO_BACNET_ITEM_RELATION } from '../data/constants';
+import { NETWORK_BIMOJECT_RELATION, AUTOMATES_TO_PROFILE_RELATION, OBJECT_TO_BACNET_ITEM_RELATION, ATTRIBUTE_CATEGORY } from '../data/constants';
+import { serviceDocumentation } from "spinal-env-viewer-plugin-documentation-service";
 
 
 export default class LinkNetworkTreeService {
+
+   constructor() { }
 
    public static async createMaps(physicalAutomates: Array<INodeInfoOBJ>, virtualAutomates: Array<INodeInfoOBJ>): Promise<Map<string, IDataFormated>> {
 
@@ -19,7 +22,7 @@ export default class LinkNetworkTreeService {
 
       const obj = await Promise.all(promises);
       for (const iterator of obj) {
-         map.set((<any>iterator).key, (<any>iterator).values);
+         map.set(iterator.key, iterator.values);
       }
 
       return map;
@@ -36,7 +39,6 @@ export default class LinkNetworkTreeService {
 
    public static async linkProfilToDevice(automateId: string, deviceProfilId: string, itemsValids: Array<{ automateItem: INodeInfoOBJ, profileItem: INodeInfoOBJ }>): Promise<boolean | Array<boolean>> {
       const profilLinked = await this.getProfilLinked(automateId);
-
       if (profilLinked) {
          // if(profilLinked === deviceProfilId) return;
          await this.unLinkDeviceToProfil(automateId, profilLinked);
@@ -44,23 +46,6 @@ export default class LinkNetworkTreeService {
 
       return this._createRelationBetweenNodes(automateId, deviceProfilId, itemsValids);
    }
-
-   public static async unLinkDeviceToProfil(automateId: string, argProfilId: string): Promise<boolean | Array<boolean>> {
-      let profilId = argProfilId;
-      if (typeof profilId === "undefined") {
-         profilId = await this.getProfilLinked(automateId);
-      }
-      const itemsValids = await this._getAutomateItems(automateId);
-
-      const promises = itemsValids.map(async (automateItem) => {
-         return this.unLinkAutomateItemToProfilItem(automateItem.id);
-      })
-
-      return Promise.all(promises).then((result) => {
-         return SpinalGraphService.removeChild(automateId, profilId, AUTOMATES_TO_PROFILE_RELATION, SPINAL_RELATION_PTR_LST_TYPE)
-      })
-   }
-
 
    public static async linkAutomateItemToProfilItem(automateItemId: string, profilItemId: string): Promise<boolean> {
       const children = await SpinalGraphService.getChildren(automateItemId, [OBJECT_TO_BACNET_ITEM_RELATION]);
@@ -77,6 +62,24 @@ export default class LinkNetworkTreeService {
    public static async getProfilLinked(automateId: string): Promise<string> {
       const children = await SpinalGraphService.getChildren(automateId, [AUTOMATES_TO_PROFILE_RELATION])
       return children.length > 0 ? children[0].id.get() : undefined;
+   }
+
+   ////
+   // supprimer un profil d'un automate
+
+   public static async unLinkDeviceToProfil(automateId: string, argProfilId: string): Promise<boolean | Array<boolean>> {
+      let profilId = argProfilId;
+      if (typeof profilId === "undefined") {
+         profilId = await this.getProfilLinked(automateId);
+      }
+      const itemsValids = await this._getAutomateItems(automateId);
+      const promises = itemsValids.map(async (automateItem) => {
+         return this.unLinkAutomateItemToProfilItem(automateItem.id);
+      })
+
+      return Promise.all(promises).then((result) => {
+         return SpinalGraphService.removeChild(automateId, profilId, AUTOMATES_TO_PROFILE_RELATION, SPINAL_RELATION_PTR_LST_TYPE)
+      })
    }
 
    public static async unLinkAutomateItemToProfilItem(automateItemId: string, profilItemId?: string): Promise<boolean | Array<boolean>> {
@@ -105,57 +108,95 @@ export default class LinkNetworkTreeService {
       })
    }
 
-   ////////////////////////////////////////////////////////////////////////////
-   ////                       PRIVATES                                       //
-   ////////////////////////////////////////////////////////////////////////////
+   ////////////////////////////////////////////////////////////////////////////////////
+   //                              private                                           //
+   ////////////////////////////////////////////////////////////////////////////////////
 
-   private static _getAutomateItems(automateId: string): Promise<Array<INodeInfoOBJ>> {
+
+
+   public static _getFormatedValues(automateInfo: INodeInfoOBJ, virtualAutomates: Array<INodeInfoOBJ>): Promise<IDataFormated> {
+
+      // const devicesModels = await (SpinalGraphService.getChildren(automateId,[NETWORK_BIMOJECT_RELATION]))
+
+      return Promise.all([this._getAutomateItems(automateInfo.id), this._formatVirtualAutomates(virtualAutomates)]).then(([devices, items]) => {
+
+
+         const res = { valids: [], invalidAutomateItems: [], invalidProfileItems: [], automate: automateInfo }
+
+         let remainingItems = JSON.parse(JSON.stringify(items))
+
+         for (const device of devices) {
+            let index;
+            const found = remainingItems.find((el, i) => {
+               if (el.namingConvention && el.namingConvention === device.namingConvention) {
+                  index = i;
+                  return true;
+               }
+               return false;
+            });
+
+            if (found) {
+               remainingItems.splice(index, 1);
+               res.valids.push({ automateItem: device, profileItem: found });
+            } else {
+               res.invalidAutomateItems.push(device)
+            }
+         }
+
+         res.invalidProfileItems = remainingItems;
+
+         return res;
+      })
+
+
+   }
+
+   public static _getAutomateItems(automateId: string): Promise<Array<INodeInfoOBJ>> {
       return SpinalGraphService.getChildren(automateId, [NETWORK_BIMOJECT_RELATION]).then((bimObjects) => {
-         return bimObjects.map(el => el.get());
+         const promises = bimObjects.map(async el => {
+            const temp = el.get()
+            temp.namingConvention = await this._getNamingConvention(temp.id, ATTRIBUTE_CATEGORY);
+            return temp;
+         });
+
+         return Promise.all(promises);
       })
    }
 
-   private static async _getFormatedValues(automateInfo: INodeInfoOBJ, virtualAutomates: Array<INodeInfoOBJ>): Promise<IDataFormated> {
-      const res = { valids: [], invalidAutomateItems: [], invalidProfileItems: [], automate: automateInfo }
+   public static _formatVirtualAutomates(virtualAutomates: Array<INodeInfoOBJ>) {
+      const promises = virtualAutomates.map(async temp => {
+         temp.namingConvention = await this._getNamingConvention(temp.id, ATTRIBUTE_CATEGORY);
+         return temp;
+      })
 
-      const devices = await this._getAutomateItems(automateInfo.id);
-
-      let remainingItems = JSON.parse(JSON.stringify(virtualAutomates))
-
-      for (const device of devices) {
-         let index;
-         const found = remainingItems.find((el, i) => {
-            if (el.namingConvention === (<any>device).namingConvention) {
-               index = i;
-               return true;
-            }
-            return false;
-         });
-
-         if (found) {
-            remainingItems.splice(index, 1);
-            res.valids.push({ automateItem: device, profileItem: found });
-         } else {
-            res.invalidAutomateItems.push(device)
-         }
-      }
-
-      res.invalidProfileItems = remainingItems;
-
-      return res;
+      return Promise.all(promises);
    }
 
-   private static _createRelationBetweenNodes(automateId: string, deviceProfilId: string, itemsValids: Array<{ automateItem: INodeInfoOBJ, profileItem: INodeInfoOBJ }>): Promise<boolean | Array<boolean>> {
+   public static async _getNamingConvention(nodeId: string, categoryName: string): Promise<string> {
+      const realNode = SpinalGraphService.getRealNode(nodeId);
+      if (realNode) {
+         const attributes = await serviceDocumentation.getAttributesByCategory(realNode, categoryName);
+
+         if (attributes && attributes.length > 0) {
+            const attr = attributes.find(el => el.label.get() === "namingConvention");
+            if (attr) return attr.value.get();
+         }
+
+      }
+
+   }
+
+   public static _createRelationBetweenNodes(automateId: string, deviceProfilId: string, itemsValids: Array<{ automateItem: INodeInfoOBJ, profileItem: INodeInfoOBJ }>): Promise<boolean | Array<boolean>> {
       const promises = itemsValids.map(({ automateItem, profileItem }) => {
          return this.linkAutomateItemToProfilItem(automateItem.id, profileItem.id);
       })
 
-      return Promise.all(promises).then(() => {
+      return Promise.all(promises).then((result) => {
          return SpinalGraphService.addChild(automateId, deviceProfilId, AUTOMATES_TO_PROFILE_RELATION, SPINAL_RELATION_PTR_LST_TYPE);
       })
    }
 
-   private static _waitForEach(automateItems: Array<INodeInfoOBJ>, argProfilItems: Array<INodeInfoOBJ>, res: IDataFormated) {
+   public static _waitForEach(automateItems: Array<INodeInfoOBJ>, argProfilItems: Array<INodeInfoOBJ>, res: IDataFormated) {
 
       let profilItems = argProfilItems
 
@@ -187,7 +228,9 @@ export default class LinkNetworkTreeService {
       })
 
    }
+
 }
+
 
 export {
    LinkNetworkTreeService

@@ -9,16 +9,18 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.GenerateNetworkTree = void 0;
+exports.GenerateNetworkTreeService = void 0;
+require("spinal-env-viewer-plugin-forge");
 const spinal_env_viewer_bim_manager_service_1 = require("spinal-env-viewer-bim-manager-service");
 const spinal_env_viewer_graph_service_1 = require("spinal-env-viewer-graph-service");
 const spinal_env_viewer_plugin_documentation_service_1 = require("spinal-env-viewer-plugin-documentation-service");
 const constants_1 = require("../data/constants");
-const spinal_env_viewer_plugin_forge_1 = require("spinal-env-viewer-plugin-forge");
-const lodash_1 = require("lodash");
+const _ = require("lodash");
 const utilities_1 = require("../utilities/utilities");
-const spinalForgeViewer = new spinal_env_viewer_plugin_forge_1.SpinalForgeViewer();
-class GenerateNetworkTree {
+// const spinalForgeViewer = new SpinalForgeViewer();
+const g_win = typeof window === "undefined" ? global : window;
+const bimObjectService = g_win.spinal.BimObjectService;
+class GenerateNetworkTreeService {
     static getElementProperties(items, attributeName, namingConventionConfig) {
         return __awaiter(this, void 0, void 0, function* () {
             const promises = [];
@@ -107,11 +109,11 @@ class GenerateNetworkTree {
             const tree = yield this._formatAutomateAttribute(items);
             const invalids = [];
             const valids = [];
-            const subList = lodash_1.default.chunk(equipments, 100);
+            const subList = _.chunk(equipments, 100);
             const promises = subList.map(el => {
                 return this._formatEquipmentAttribute(tree, el, config);
             });
-            return Promise.all(lodash_1.default.flattenDeep(promises)).then((result) => {
+            return Promise.all(_.flattenDeep(promises)).then((result) => {
                 for (const ite of result) {
                     if (ite.parentId !== "noParent") {
                         tree.push(ite);
@@ -177,7 +179,7 @@ class GenerateNetworkTree {
         return __awaiter(this, void 0, void 0, function* () {
             const elements = yield this._getBimObjectName({ dbId, model });
             const element = elements[0];
-            return spinalForgeViewer.bimObjectService.createBIMObject(element.dbId, element.name, model).then((node) => {
+            return bimObjectService.createBIMObject(element.dbId, element.name, model).then((node) => {
                 const nodeId = node.id ? node.id.get() : node.info.id.get();
                 const realNode = spinal_env_viewer_graph_service_1.SpinalGraphService.getRealNode(nodeId);
                 if (realNode.info.color) {
@@ -296,6 +298,6 @@ class GenerateNetworkTree {
         });
     }
 }
-exports.default = GenerateNetworkTree;
-exports.GenerateNetworkTree = GenerateNetworkTree;
-//# sourceMappingURL=GenerateNetworkTree.js.map
+exports.default = GenerateNetworkTreeService;
+exports.GenerateNetworkTreeService = GenerateNetworkTreeService;
+//# sourceMappingURL=GenerateNetworkTreeService.js.map

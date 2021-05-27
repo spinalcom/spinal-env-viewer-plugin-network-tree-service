@@ -1,9 +1,9 @@
-import { GenerateNetworkTree } from "./services/GenerateNetworkTree";
-import { LinkBmsDevice } from "./services/LinkBmsDevices";
-import { LinkNetworkTreeService } from "./services/LinkNetworTreeService";
+import { GenerateNetworkTreeService } from "./services/GenerateNetworkTreeService";
+import { LinkBmsDeviceService } from "./services/LinkBmsDevicesService";
+import { LinkNetworkTreeService } from "./services/LinkNetworkTreeService";
 import { NetworkTreeService } from "./services/NetworkTreeService";
 import { CONTEXT_TYPE, NETWORK_TYPE, NETWORK_RELATION, PLC_ATTR, OBJECT_ATTR, ATTRIBUTE_CATEGORY, NETWORK_BIMOJECT_RELATION, AUTOMATES_TO_PROFILE_RELATION, OBJECT_TO_BACNET_ITEM_RELATION } from "./data/constants";
-
+import { DeviceProfileUtilities } from "./utilities/DeviceProfileUtilities";
 
 const CONSTANTS = {
    CONTEXT_TYPE,
@@ -17,21 +17,23 @@ const CONSTANTS = {
    OBJECT_TO_BACNET_ITEM_RELATION
 }
 
-const generateNetworkTree: GenerateNetworkTree = GenerateNetworkTree;
-const linkBmsDevice: LinkBmsDevice = LinkBmsDevice;
+const generateNetworkTreeService: GenerateNetworkTreeService = GenerateNetworkTreeService;
+const linkBmsDeviceService: LinkBmsDeviceService = LinkBmsDeviceService;
 const linkNetworkTreeService: LinkNetworkTreeService = LinkNetworkTreeService;
 const networkTreeService: NetworkTreeService = NetworkTreeService;
-
+const deviceProfileUtilities: DeviceProfileUtilities = DeviceProfileUtilities;
 
 
 export {
    CONSTANTS,
-   GenerateNetworkTree,
-   LinkBmsDevice,
+   GenerateNetworkTreeService,
+   LinkBmsDeviceService,
    LinkNetworkTreeService,
    NetworkTreeService,
-   generateNetworkTree,
-   linkBmsDevice,
+   generateNetworkTreeService,
+   linkBmsDeviceService,
    linkNetworkTreeService,
-   networkTreeService
+   networkTreeService,
+   DeviceProfileUtilities,
+   deviceProfileUtilities
 }

@@ -13,7 +13,9 @@ exports.LinkNetworkTreeService = void 0;
 const spinal_env_viewer_graph_service_1 = require("spinal-env-viewer-graph-service");
 const DeviceProfileUtilities_1 = require("../utilities/DeviceProfileUtilities");
 const constants_1 = require("../data/constants");
+const spinal_env_viewer_plugin_documentation_service_1 = require("spinal-env-viewer-plugin-documentation-service");
 class LinkNetworkTreeService {
+    constructor() { }
     static createMaps(physicalAutomates, virtualAutomates) {
         return __awaiter(this, void 0, void 0, function* () {
             let map = new Map();
@@ -47,21 +49,6 @@ class LinkNetworkTreeService {
             return this._createRelationBetweenNodes(automateId, deviceProfilId, itemsValids);
         });
     }
-    static unLinkDeviceToProfil(automateId, argProfilId) {
-        return __awaiter(this, void 0, void 0, function* () {
-            let profilId = argProfilId;
-            if (typeof profilId === "undefined") {
-                profilId = yield this.getProfilLinked(automateId);
-            }
-            const itemsValids = yield this._getAutomateItems(automateId);
-            const promises = itemsValids.map((automateItem) => __awaiter(this, void 0, void 0, function* () {
-                return this.unLinkAutomateItemToProfilItem(automateItem.id);
-            }));
-            return Promise.all(promises).then((result) => {
-                return spinal_env_viewer_graph_service_1.SpinalGraphService.removeChild(automateId, profilId, constants_1.AUTOMATES_TO_PROFILE_RELATION, spinal_env_viewer_graph_service_1.SPINAL_RELATION_PTR_LST_TYPE);
-            });
-        });
-    }
     static linkAutomateItemToProfilItem(automateItemId, profilItemId) {
         return __awaiter(this, void 0, void 0, function* () {
             const children = yield spinal_env_viewer_graph_service_1.SpinalGraphService.getChildren(automateItemId, [constants_1.OBJECT_TO_BACNET_ITEM_RELATION]);
@@ -78,6 +65,23 @@ class LinkNetworkTreeService {
         return __awaiter(this, void 0, void 0, function* () {
             const children = yield spinal_env_viewer_graph_service_1.SpinalGraphService.getChildren(automateId, [constants_1.AUTOMATES_TO_PROFILE_RELATION]);
             return children.length > 0 ? children[0].id.get() : undefined;
+        });
+    }
+    ////
+    // supprimer un profil d'un automate
+    static unLinkDeviceToProfil(automateId, argProfilId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let profilId = argProfilId;
+            if (typeof profilId === "undefined") {
+                profilId = yield this.getProfilLinked(automateId);
+            }
+            const itemsValids = yield this._getAutomateItems(automateId);
+            const promises = itemsValids.map((automateItem) => __awaiter(this, void 0, void 0, function* () {
+                return this.unLinkAutomateItemToProfilItem(automateItem.id);
+            }));
+            return Promise.all(promises).then((result) => {
+                return spinal_env_viewer_graph_service_1.SpinalGraphService.removeChild(automateId, profilId, constants_1.AUTOMATES_TO_PROFILE_RELATION, spinal_env_viewer_graph_service_1.SPINAL_RELATION_PTR_LST_TYPE);
+            });
         });
     }
     static unLinkAutomateItemToProfilItem(automateItemId, profilItemId) {
@@ -103,23 +107,18 @@ class LinkNetworkTreeService {
             });
         });
     }
-    ////////////////////////////////////////////////////////////////////////////
-    ////                       PRIVATES                                       //
-    ////////////////////////////////////////////////////////////////////////////
-    static _getAutomateItems(automateId) {
-        return spinal_env_viewer_graph_service_1.SpinalGraphService.getChildren(automateId, [constants_1.NETWORK_BIMOJECT_RELATION]).then((bimObjects) => {
-            return bimObjects.map(el => el.get());
-        });
-    }
+    ////////////////////////////////////////////////////////////////////////////////////
+    //                              private                                           //
+    ////////////////////////////////////////////////////////////////////////////////////
     static _getFormatedValues(automateInfo, virtualAutomates) {
-        return __awaiter(this, void 0, void 0, function* () {
+        // const devicesModels = await (SpinalGraphService.getChildren(automateId,[NETWORK_BIMOJECT_RELATION]))
+        return Promise.all([this._getAutomateItems(automateInfo.id), this._formatVirtualAutomates(virtualAutomates)]).then(([devices, items]) => {
             const res = { valids: [], invalidAutomateItems: [], invalidProfileItems: [], automate: automateInfo };
-            const devices = yield this._getAutomateItems(automateInfo.id);
-            let remainingItems = JSON.parse(JSON.stringify(virtualAutomates));
+            let remainingItems = JSON.parse(JSON.stringify(items));
             for (const device of devices) {
                 let index;
                 const found = remainingItems.find((el, i) => {
-                    if (el.namingConvention === device.namingConvention) {
+                    if (el.namingConvention && el.namingConvention === device.namingConvention) {
                         index = i;
                         return true;
                     }
@@ -137,11 +136,41 @@ class LinkNetworkTreeService {
             return res;
         });
     }
+    static _getAutomateItems(automateId) {
+        return spinal_env_viewer_graph_service_1.SpinalGraphService.getChildren(automateId, [constants_1.NETWORK_BIMOJECT_RELATION]).then((bimObjects) => {
+            const promises = bimObjects.map((el) => __awaiter(this, void 0, void 0, function* () {
+                const temp = el.get();
+                temp.namingConvention = yield this._getNamingConvention(temp.id, constants_1.ATTRIBUTE_CATEGORY);
+                return temp;
+            }));
+            return Promise.all(promises);
+        });
+    }
+    static _formatVirtualAutomates(virtualAutomates) {
+        const promises = virtualAutomates.map((temp) => __awaiter(this, void 0, void 0, function* () {
+            temp.namingConvention = yield this._getNamingConvention(temp.id, constants_1.ATTRIBUTE_CATEGORY);
+            return temp;
+        }));
+        return Promise.all(promises);
+    }
+    static _getNamingConvention(nodeId, categoryName) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const realNode = spinal_env_viewer_graph_service_1.SpinalGraphService.getRealNode(nodeId);
+            if (realNode) {
+                const attributes = yield spinal_env_viewer_plugin_documentation_service_1.serviceDocumentation.getAttributesByCategory(realNode, categoryName);
+                if (attributes && attributes.length > 0) {
+                    const attr = attributes.find(el => el.label.get() === "namingConvention");
+                    if (attr)
+                        return attr.value.get();
+                }
+            }
+        });
+    }
     static _createRelationBetweenNodes(automateId, deviceProfilId, itemsValids) {
         const promises = itemsValids.map(({ automateItem, profileItem }) => {
             return this.linkAutomateItemToProfilItem(automateItem.id, profileItem.id);
         });
-        return Promise.all(promises).then(() => {
+        return Promise.all(promises).then((result) => {
             return spinal_env_viewer_graph_service_1.SpinalGraphService.addChild(automateId, deviceProfilId, constants_1.AUTOMATES_TO_PROFILE_RELATION, spinal_env_viewer_graph_service_1.SPINAL_RELATION_PTR_LST_TYPE);
         });
     }
@@ -171,4 +200,4 @@ class LinkNetworkTreeService {
 }
 exports.default = LinkNetworkTreeService;
 exports.LinkNetworkTreeService = LinkNetworkTreeService;
-//# sourceMappingURL=LinkNetworTreeService.js.map
+//# sourceMappingURL=LinkNetworkTreeService.js.map

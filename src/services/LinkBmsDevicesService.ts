@@ -1,4 +1,4 @@
-import { LinkNetworkTreeService } from "./LinkNetworTreeService";
+import { LinkNetworkTreeService } from "./LinkNetworkTreeService";
 import { SpinalGraphService, SPINAL_RELATION_PTR_LST_TYPE } from "spinal-env-viewer-graph-service"
 import { SpinalBmsDevice, SpinalBmsEndpoint } from "spinal-model-bmsnetwork";
 import { AUTOMATES_TO_PROFILE_RELATION, OBJECT_TO_BACNET_ITEM_RELATION, ATTRIBUTE_CATEGORY } from "../data/constants";
@@ -6,7 +6,9 @@ import { INodeInfoOBJ } from "../data/Interfaces";
 
 import DeviceProfileUtilities from "../utilities/DeviceProfileUtilities";
 import Utilities from "../utilities/utilities";
-export default class LinkBmsDevice {
+
+
+export default class LinkBmsDeviceService {
 
 
    public static async LinkBmsDeviceToBimDevices(bmsContextId: string, bmsDeviceId: string, bimDeviceId: string): Promise<void> {
@@ -178,5 +180,5 @@ export default class LinkBmsDevice {
 
 
 export {
-   LinkBmsDevice
+   LinkBmsDeviceService
 }
