@@ -82,21 +82,21 @@ class LinkBmsDeviceService {
                 yield this.unLinkProfilToBmsDevice(bmsContextId, bmsDeviceId);
             }
             const endpointMapPromise = this.getEndpointsMap(bmsContextId, bmsDeviceId);
-            const profilMapPromise = DeviceProfileUtilities_1.default.getInputOutputMap(profilId);
+            const profilMapPromise = DeviceProfileUtilities_1.default.getBacnetValuesMap(profilId);
             const res = yield Promise.all([endpointMapPromise, profilMapPromise]);
             const bmsDevicesMap = res[0];
             const profilDeviceMap = res[1];
-            const promises = Array.from(profilDeviceMap.keys()).map(key => {
+            const promises = Array.from(bmsDevicesMap.keys()).map((key) => __awaiter(this, void 0, void 0, function* () {
                 const bmsElement = bmsDevicesMap.get(key);
                 const profilElement = profilDeviceMap.get(key);
                 if (bmsElement && profilElement) {
+                    // console.log("inside if", bmsElement.name, profilElement.name);
                     return spinal_env_viewer_graph_service_1.SpinalGraphService.addChild(bmsElement.id, profilElement.id, constants_1.OBJECT_TO_BACNET_ITEM_RELATION, spinal_env_viewer_graph_service_1.SPINAL_RELATION_PTR_LST_TYPE);
                 }
                 return;
-            });
+            }));
             yield Promise.all(promises);
-            yield spinal_env_viewer_graph_service_1.SpinalGraphService.addChild(bmsDeviceId, profilId, constants_1.AUTOMATES_TO_PROFILE_RELATION, spinal_env_viewer_graph_service_1.SPINAL_RELATION_PTR_LST_TYPE);
-            return;
+            return spinal_env_viewer_graph_service_1.SpinalGraphService.addChild(bmsDeviceId, profilId, constants_1.AUTOMATES_TO_PROFILE_RELATION, spinal_env_viewer_graph_service_1.SPINAL_RELATION_PTR_LST_TYPE);
         });
     }
     static unLinkProfilToBmsDevice(bmsContextId, bmsDeviceId) {

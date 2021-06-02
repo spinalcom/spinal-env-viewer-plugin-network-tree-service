@@ -3,6 +3,7 @@ import { LinkBmsDeviceService } from "./services/LinkBmsDevicesService";
 import { LinkNetworkTreeService } from "./services/LinkNetworkTreeService";
 import { NetworkTreeService } from "./services/NetworkTreeService";
 import { DeviceProfileUtilities } from "./utilities/DeviceProfileUtilities";
+import { AttributesUtilities } from "./utilities/AttributesUtilities";
 declare const CONSTANTS: {
     CONTEXT_TYPE: string;
     NETWORK_TYPE: string;
@@ -19,4 +20,5 @@ declare const linkBmsDeviceService: LinkBmsDeviceService;
 declare const linkNetworkTreeService: LinkNetworkTreeService;
 declare const networkTreeService: NetworkTreeService;
 declare const deviceProfileUtilities: DeviceProfileUtilities;
-export { CONSTANTS, GenerateNetworkTreeService, LinkBmsDeviceService, LinkNetworkTreeService, NetworkTreeService, generateNetworkTreeService, linkBmsDeviceService, linkNetworkTreeService, networkTreeService, DeviceProfileUtilities, deviceProfileUtilities };
+declare const attributesUtilities: AttributesUtilities;
+export { CONSTANTS, GenerateNetworkTreeService, LinkBmsDeviceService, LinkNetworkTreeService, NetworkTreeService, AttributesUtilities, DeviceProfileUtilities, generateNetworkTreeService, linkBmsDeviceService, linkNetworkTreeService, networkTreeService, attributesUtilities, deviceProfileUtilities };

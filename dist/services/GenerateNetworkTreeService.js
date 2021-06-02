@@ -11,10 +11,12 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.GenerateNetworkTreeService = void 0;
 require("spinal-env-viewer-plugin-forge");
-const spinal_env_viewer_bim_manager_service_1 = require("spinal-env-viewer-bim-manager-service");
 const spinal_env_viewer_graph_service_1 = require("spinal-env-viewer-graph-service");
 const spinal_env_viewer_plugin_documentation_service_1 = require("spinal-env-viewer-plugin-documentation-service");
 const constants_1 = require("../data/constants");
+const AttributesUtilities_1 = require("../utilities/AttributesUtilities");
+// import { NetworkTreeService } from "./NetworkTreeService";
+const spinal_core_connectorjs_type_1 = require("spinal-core-connectorjs_type");
 const _ = require("lodash");
 const utilities_1 = require("../utilities/utilities");
 // const spinalForgeViewer = new SpinalForgeViewer();
@@ -23,12 +25,17 @@ const bimObjectService = g_win.spinal.BimObjectService;
 class GenerateNetworkTreeService {
     static getElementProperties(items, attributeName, namingConventionConfig) {
         return __awaiter(this, void 0, void 0, function* () {
-            const promises = [];
-            const data = yield spinal_env_viewer_bim_manager_service_1.bimObjectManagerService.getBimObjectProperties(items);
-            for (const item of data) {
-                promises.push(this._getItemPropertiesFormatted(item.model, item.properties, attributeName, namingConventionConfig));
-            }
+            if (!Array.isArray(items))
+                items = [items];
+            const promises = items.map(({ model, selection }) => {
+                return this._getItemPropertiesFormatted(model, selection, attributeName, namingConventionConfig);
+            });
+            // const data = await bimObjectManagerService.getBimObjectProperties(items);
+            // for (const item of data) {
+            //    promises.push(this._getItemPropertiesFormatted(item.model, item.properties, attributeName, namingConventionConfig));
+            // }
             return Promise.all(promises).then((result) => {
+                // console.log("result", result);
                 const resultFlatted = utilities_1.default._flatten(result);
                 const res = {
                     validItems: [],
@@ -76,17 +83,49 @@ class GenerateNetworkTreeService {
         }
         return res;
     }
+    static _createNodes(contextId, node, parentId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let id;
+            let relationName;
+            if (node.dbId) {
+                id = yield this._createBimObjectNode(node);
+                relationName = constants_1.NETWORK_BIMOJECT_RELATION;
+            }
+            else {
+                id = spinal_env_viewer_graph_service_1.SpinalGraphService.createNode({
+                    name: node.name,
+                    type: constants_1.NETWORK_TYPE,
+                    color: node.color,
+                    isAutomate: node.isAutomate
+                }, new spinal_core_connectorjs_type_1.Model());
+                relationName = constants_1.NETWORK_RELATION;
+            }
+            return this._addSpinalAttribute(id, node.namingConvention).then(() => __awaiter(this, void 0, void 0, function* () {
+                yield spinal_env_viewer_graph_service_1.SpinalGraphService.addChildInContext(parentId, id, contextId, relationName, spinal_env_viewer_graph_service_1.SPINAL_RELATION_PTR_LST_TYPE);
+                if (node.children && node.children.length > 0) {
+                    return Promise.all(node.children.map(el => this._createNodes(contextId, el, id)));
+                }
+                return spinal_env_viewer_graph_service_1.SpinalGraphService.getRealNode(id);
+            }));
+        });
+    }
     ////////////////////////////////////////////////////////////////////////////////
     ////                                PRIVATES                                  //
     ////////////////////////////////////////////////////////////////////////////////
     static _getItemPropertiesFormatted(model, itemList, attributeName, namingConventionConfig) {
-        const promises = itemList.map((el) => __awaiter(this, void 0, void 0, function* () {
-            el.model = model;
-            el.property = this._getAttributeByName(el.properties, attributeName);
+        const promises = itemList.map((dbid) => __awaiter(this, void 0, void 0, function* () {
+            // el.model = model;
+            // el.property = this._getAttributeByName(el.properties, attributeName);
+            // if (namingConventionConfig) {
+            //    el.namingConvention = await this._getNamingConvention(el, namingConventionConfig);
+            // }
+            // return el;
+            const obj = { model, dbId: dbid };
+            obj["property"] = yield AttributesUtilities_1.AttributesUtilities.findAttribute(model, dbid, attributeName);
             if (namingConventionConfig) {
-                el.namingConvention = yield this._getNamingConvention(el, namingConventionConfig);
+                obj["namingConvention"] = yield this._getNamingConvention(obj.property, namingConventionConfig);
             }
-            return el;
+            return obj;
         }));
         return Promise.all(promises);
     }
@@ -97,11 +136,6 @@ class GenerateNetworkTreeService {
             }, (el) => {
                 resolve(el);
             });
-        });
-    }
-    static _getAttributeByName(properties, propertyName) {
-        return properties.find((obj) => {
-            return (obj.displayName === propertyName || obj.attributeName === propertyName) && (obj.displayValue && ((obj.displayValue + '').length > 0));
         });
     }
     static _getTreeArray(items, equipments, config) {
@@ -198,32 +232,6 @@ class GenerateNetworkTreeService {
             });
         });
     }
-    static _createNodes(contextId, node, parentId) {
-        return __awaiter(this, void 0, void 0, function* () {
-            let id;
-            let relationName;
-            if (node.externalId && node.dbId) {
-                id = yield this._createBimObjectNode(node);
-                relationName = constants_1.NETWORK_BIMOJECT_RELATION;
-            }
-            else {
-                id = spinal_env_viewer_graph_service_1.SpinalGraphService.createNode({
-                    name: node.name,
-                    type: constants_1.NETWORK_TYPE,
-                    color: node.color,
-                    isAutomate: node.isAutomate
-                }, new spinal.Model());
-                relationName = constants_1.NETWORK_RELATION;
-            }
-            return this._addSpinalAttribute(id, node.namingConvention).then((result) => __awaiter(this, void 0, void 0, function* () {
-                yield spinal_env_viewer_graph_service_1.SpinalGraphService.addChildInContext(parentId, id, contextId, relationName, spinal_env_viewer_graph_service_1.SPINAL_RELATION_PTR_LST_TYPE);
-                if (node.children && node.children.length > 0) {
-                    return Promise.all(node.children.map(el => this._createNodes(contextId, el, id)));
-                }
-                return [];
-            }));
-        });
-    }
     static _TransformArrayToTree(items) {
         const rootItems = [];
         const lookup = {};
@@ -268,25 +276,28 @@ class GenerateNetworkTreeService {
             })`);
         }
     }
-    static _getNamingConvention(node, namingConventionConfig) {
+    static _getNamingConvention(property, namingConventionConfig) {
         return __awaiter(this, void 0, void 0, function* () {
-            const property = yield this._getpropertyValue(node, namingConventionConfig.attributeName);
+            // const property = await this._getpropertyValue(node, namingConventionConfig.attributeName);
             if (property && ((property.displayValue + '').length > 0)) {
                 const value = property.displayValue;
                 return namingConventionConfig.useAttrValue ? value : eval(`(${namingConventionConfig.personalized.callback})('${value}')`);
             }
         });
     }
-    static _getpropertyValue(node, attributeName) {
-        return __awaiter(this, void 0, void 0, function* () {
-            let properties = node.properties;
-            if (typeof properties === "undefined") {
-                const res = yield spinal_env_viewer_bim_manager_service_1.bimObjectManagerService.getBimObjectProperties([{ model: node.model, selection: [node.dbId] }]);
-                properties = res[0].properties;
-            }
-            return this._getAttributeByName(properties, attributeName);
-        });
-    }
+    // private static async _getpropertyValue(node, attributeName) {
+    //    let properties = node.properties;
+    //    if (typeof properties === "undefined") {
+    //       const res = await bimObjectManagerService.getBimObjectProperties([{ model: node.model, selection: [node.dbId] }]);
+    //       properties = res[0].properties;
+    //    }
+    //    return this._getAttributeByName(properties, attributeName);
+    // }
+    // private static _getAttributeByName(properties, propertyName) {
+    //    return properties.find((obj) => {
+    //       return (obj.displayName === propertyName || obj.attributeName === propertyName) && (obj.displayValue && ((obj.displayValue + '').length > 0))
+    //    });
+    // }
     static _addSpinalAttribute(id, namingConvention) {
         if (!namingConvention || namingConvention.length === 0)
             return;

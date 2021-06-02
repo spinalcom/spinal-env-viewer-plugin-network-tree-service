@@ -1,11 +1,12 @@
-
 import "spinal-env-viewer-plugin-forge";
 
 import { bimObjectManagerService } from "spinal-env-viewer-bim-manager-service";
-import { SpinalGraphService, SPINAL_RELATION_PTR_LST_TYPE } from "spinal-env-viewer-graph-service";
+import { SpinalGraphService, SpinalNode, SPINAL_RELATION_PTR_LST_TYPE } from "spinal-env-viewer-graph-service";
 import { serviceDocumentation } from "spinal-env-viewer-plugin-documentation-service";
 import { NETWORK_BIMOJECT_RELATION, NETWORK_TYPE, OBJECT_ATTR, PLC_ATTR, ATTRIBUTE_CATEGORY, NETWORK_RELATION } from "../data/constants";
-import { NetworkTreeService } from "./NetworkTreeService";
+import { AttributesUtilities } from '../utilities/AttributesUtilities';
+// import { NetworkTreeService } from "./NetworkTreeService";
+import { Model } from "spinal-core-connectorjs_type";
 
 import * as _ from 'lodash';
 import Utilities from "../utilities/utilities";
@@ -19,19 +20,25 @@ const bimObjectService = g_win.spinal.BimObjectService;
 export default class GenerateNetworkTreeService {
 
 
-   public static async getElementProperties(items: { model: any; selection: Number[] } | Array<{ model: any; selection: Number[] }>, attributeName: string, namingConventionConfig: {
+   public static async getElementProperties(items: { model: any; selection: number[] } | Array<{ model: any; selection: number[] }>, attributeName: string, namingConventionConfig: {
       attributeName: string, useAttrValue: boolean, personalized: { callback: Function }
    }): Promise<{ validItems: Array<any>; invalidItems: Array<any> }> {
 
-      const promises = [];
+      if (!Array.isArray(items)) items = [items];
 
-      const data = await bimObjectManagerService.getBimObjectProperties(items);
+      const promises = items.map(({ model, selection }) => {
+         return this._getItemPropertiesFormatted(model, selection, attributeName, namingConventionConfig);
+      });
 
-      for (const item of data) {
-         promises.push(this._getItemPropertiesFormatted(item.model, item.properties, attributeName, namingConventionConfig));
-      }
+      // const data = await bimObjectManagerService.getBimObjectProperties(items);
+
+      // for (const item of data) {
+      //    promises.push(this._getItemPropertiesFormatted(item.model, item.properties, attributeName, namingConventionConfig));
+      // }
 
       return Promise.all(promises).then((result) => {
+         // console.log("result", result);
+
          const resultFlatted = Utilities._flatten(result);
 
          const res = {
@@ -51,7 +58,9 @@ export default class GenerateNetworkTreeService {
       })
    }
 
-   public static async createTree(automates, equipments, config): Promise<{ tree: Array<any>; invalids: Array<any>; valids: Array<any>; }> {
+   public static async createTree(automates: Array<{ model: any; dbId: number; property: { attributeName?: string; displayCategory?: string; displayName?: string; displayValue?: string; } }>,
+      equipments: Array<{ model: any; dbId: number; property: { attributeName?: string; displayCategory?: string; displayName?: string; displayValue?: string; } }>,
+      config): Promise<{ tree: Array<any>; invalids: Array<any>; valids: Array<any>; }> {
       return this._getTreeArray(automates, equipments, config).then(async ({ tree, valids, invalids }) => {
          const treeL = await this._TransformArrayToTree(tree);
          return {
@@ -68,7 +77,7 @@ export default class GenerateNetworkTreeService {
       if (dontCreateEmptyAutomate) {
          tree = tree.filter(el => el.children.length > 0);
       }
-      const promises = tree.map(el => this._createNodes(contextId, el, nodeId));
+      const promises = tree.map(el => this._createNodes(contextId, <any>el, nodeId));
       return Promise.all(promises);
 
    }
@@ -84,19 +93,58 @@ export default class GenerateNetworkTreeService {
       return res;
    }
 
+   public static async _createNodes(contextId: string, node: { namingConvention: string; children: Array<any>; name?: string; dbId: number | string; model: any; color: string; isAutomate: boolean; externalId?: string }, parentId: string): Promise<SpinalNode<any> | Array<any>> {
+      let id;
+      let relationName;
+
+      if (node.dbId) {
+         id = await this._createBimObjectNode(node);
+         relationName = NETWORK_BIMOJECT_RELATION
+      } else {
+         id = SpinalGraphService.createNode({
+            name: node.name,
+            type: NETWORK_TYPE,
+            color: node.color,
+            isAutomate: node.isAutomate
+         }, new Model());
+         relationName = NETWORK_RELATION
+      }
+
+      return this._addSpinalAttribute(id, node.namingConvention).then(async () => {
+         await SpinalGraphService.addChildInContext(parentId, id, contextId, relationName, SPINAL_RELATION_PTR_LST_TYPE);
+
+         if (node.children && node.children.length > 0) {
+            return Promise.all(node.children.map(el => this._createNodes(contextId, el, id)))
+         }
+
+         return SpinalGraphService.getRealNode(id);
+      })
+
+
+
+   }
+
    ////////////////////////////////////////////////////////////////////////////////
    ////                                PRIVATES                                  //
    ////////////////////////////////////////////////////////////////////////////////
 
-   private static _getItemPropertiesFormatted(model: any, itemList: Array<any>, attributeName: string, namingConventionConfig: {}) {
-      const promises = itemList.map(async el => {
-         el.model = model;
-         el.property = this._getAttributeByName(el.properties, attributeName);
+   private static _getItemPropertiesFormatted(model: any, itemList: Array<number>, attributeName: string, namingConventionConfig: {}) {
+      const promises = itemList.map(async dbid => {
+         // el.model = model;
+         // el.property = this._getAttributeByName(el.properties, attributeName);
+         // if (namingConventionConfig) {
+         //    el.namingConvention = await this._getNamingConvention(el, namingConventionConfig);
+         // }
+
+         // return el;
+         const obj = { model, dbId: dbid };
+         obj["property"] = await AttributesUtilities.findAttribute(model, dbid, attributeName);
+
          if (namingConventionConfig) {
-            el.namingConvention = await this._getNamingConvention(el, namingConventionConfig);
+            obj["namingConvention"] = await this._getNamingConvention((<any>obj).property, namingConventionConfig);
          }
 
-         return el;
+         return obj;
       })
 
       return Promise.all(promises)
@@ -112,11 +160,7 @@ export default class GenerateNetworkTreeService {
       });
    }
 
-   private static _getAttributeByName(properties, propertyName) {
-      return properties.find((obj) => {
-         return (obj.displayName === propertyName || obj.attributeName === propertyName) && (obj.displayValue && ((obj.displayValue + '').length > 0))
-      });
-   }
+
 
    private static async _getTreeArray(items, equipments, config) {
 
@@ -230,37 +274,6 @@ export default class GenerateNetworkTreeService {
       })
    }
 
-   private static async _createNodes(contextId, node, parentId) {
-      let id;
-      let relationName;
-
-      if (node.externalId && node.dbId) {
-         id = await this._createBimObjectNode(node);
-         relationName = NETWORK_BIMOJECT_RELATION
-      } else {
-         id = SpinalGraphService.createNode({
-            name: node.name,
-            type: NETWORK_TYPE,
-            color: node.color,
-            isAutomate: node.isAutomate
-         }, new spinal.Model());
-         relationName = NETWORK_RELATION
-      }
-
-      return this._addSpinalAttribute(id, node.namingConvention).then(async (result) => {
-         await SpinalGraphService.addChildInContext(parentId, id, contextId, relationName, SPINAL_RELATION_PTR_LST_TYPE);
-
-         if (node.children && node.children.length > 0) {
-            return Promise.all(node.children.map(el => this._createNodes(contextId, el, id)))
-         }
-
-         return []
-      })
-
-
-
-   }
-
    private static _TransformArrayToTree(items) {
 
       const rootItems = [];
@@ -323,8 +336,9 @@ export default class GenerateNetworkTreeService {
       }
    }
 
-   private static async _getNamingConvention(node, namingConventionConfig) {
-      const property = await this._getpropertyValue(node, namingConventionConfig.attributeName);
+   private static async _getNamingConvention(property, namingConventionConfig) {
+      // const property = await this._getpropertyValue(node, namingConventionConfig.attributeName);
+
 
       if (property && ((property.displayValue + '').length > 0)) {
          const value = property.displayValue;
@@ -334,15 +348,21 @@ export default class GenerateNetworkTreeService {
 
    }
 
-   private static async _getpropertyValue(node, attributeName) {
-      let properties = node.properties;
-      if (typeof properties === "undefined") {
-         const res = await bimObjectManagerService.getBimObjectProperties([{ model: node.model, selection: [node.dbId] }]);
-         properties = res[0].properties;
-      }
+   // private static async _getpropertyValue(node, attributeName) {
+   //    let properties = node.properties;
+   //    if (typeof properties === "undefined") {
+   //       const res = await bimObjectManagerService.getBimObjectProperties([{ model: node.model, selection: [node.dbId] }]);
+   //       properties = res[0].properties;
+   //    }
 
-      return this._getAttributeByName(properties, attributeName);
-   }
+   //    return this._getAttributeByName(properties, attributeName);
+   // }
+
+   // private static _getAttributeByName(properties, propertyName) {
+   //    return properties.find((obj) => {
+   //       return (obj.displayName === propertyName || obj.attributeName === propertyName) && (obj.displayValue && ((obj.displayValue + '').length > 0))
+   //    });
+   // }
 
    private static _addSpinalAttribute(id, namingConvention) {
       if (!namingConvention || namingConvention.length === 0) return;

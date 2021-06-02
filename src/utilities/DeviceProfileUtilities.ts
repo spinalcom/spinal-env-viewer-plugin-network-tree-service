@@ -16,6 +16,14 @@ export default class DeviceProfileUtilities {
    public static OUTPUTS_RELATION: string = "hasOutputs";
    public static OUTPUT_RELATION: string = "hasOutput";
 
+   public static PROFIL_TO_BACNET_RELATION: string = "hasBacnetValues";
+
+   public static ANALOG_VALUE_RELATION: string = "hasAnalogValues";
+   public static MULTISTATE_VALUE_RELATION: string = "hasMultiStateValues";
+   public static BINARY_VALUE_RELATION: string = "hasBinaryValues";
+
+   public static BACNET_VALUES_TYPE: string[] = ["networkValue", "binaryValue", "analogValue", "multiStateValue"];
+
 
    public static getDevicesContexts(): Array<{ name: string; type: string; id: string }> {
       const result = SpinalGraphService.getContextWithType(this.DEVICE_PROFILE_CONTEXT)
@@ -98,6 +106,8 @@ export default class DeviceProfileUtilities {
       const outputsPromises = this.getItemOutputs(nodeId);
 
       return Promise.all([inputsPromises, outputsPromises]).then((result) => {
+         // console.log("[input, output]", result);
+
          const children = Utilities._flatten(result);
 
          const promises = children.map(async child => {
@@ -122,12 +132,37 @@ export default class DeviceProfileUtilities {
       })
    }
 
-   public static async getInputOutputMap(profilId: string): Promise<Map<number, any>> {
+
+   public static async getProfilBacnetValues(profilId: string, profilContextId?: string) {
+      if (typeof profilContextId === "undefined" || profilContextId.trim().length === 0) {
+         let realNode = SpinalGraphService.getRealNode(profilId);
+         if (!realNode) return;
+         const contextIds = realNode.getContextIds();
+         profilContextId = contextIds.find(id => {
+            let info = SpinalGraphService.getInfo(id);
+            return info && info.type.get() === this.DEVICE_PROFILE_CONTEXT;
+         })
+      }
+
+      if (!profilContextId) return;
+
+      const bacnetValues = await SpinalGraphService.findInContext(profilId, profilContextId, (node) => {
+         if (this.BACNET_VALUES_TYPE.indexOf(node.getType().get()) !== -1) {
+            (<any>SpinalGraphService)._addNode(node);
+            return true;
+         }
+         return false;
+      })
+
+      return bacnetValues.map(el => el.get());
+   }
+
+   public static async getBacnetValuesMap(profilId: string): Promise<Map<number, any>> {
       const bimDeviceMap: Map<number, any> = new Map();
 
-      const attrs = await this.getItemIO(profilId);
-      for (const attr of attrs) {
+      const attrs = await this.getProfilBacnetValues(profilId);
 
+      for (const attr of attrs) {
          bimDeviceMap.set((parseInt((<any>attr).IDX) + 1), attr);
       }
 

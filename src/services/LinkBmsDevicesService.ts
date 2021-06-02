@@ -77,7 +77,7 @@ export default class LinkBmsDeviceService {
       }
    }
 
-   public static async linkProfilToBmsDevice(bmsContextId: string, bmsDeviceId: string, profilId: string): Promise<void> {
+   public static async linkProfilToBmsDevice(bmsContextId: string, bmsDeviceId: string, profilId: string): Promise<boolean> {
       const bimDeviceId = await this.bmsDevicehasBimDevice(bmsDeviceId);
       if (bimDeviceId) {
          await this.unLinkBmsDeviceToBimDevices(bmsContextId, bmsDeviceId, bimDeviceId);
@@ -86,7 +86,7 @@ export default class LinkBmsDeviceService {
       }
 
       const endpointMapPromise = this.getEndpointsMap(bmsContextId, bmsDeviceId);
-      const profilMapPromise = DeviceProfileUtilities.getInputOutputMap(profilId);
+      const profilMapPromise = DeviceProfileUtilities.getBacnetValuesMap(profilId);
 
 
       const res = await Promise.all([endpointMapPromise, profilMapPromise]);
@@ -94,18 +94,19 @@ export default class LinkBmsDeviceService {
       const bmsDevicesMap: any = res[0];
       const profilDeviceMap: any = res[1];
 
-      const promises = Array.from(profilDeviceMap.keys()).map(key => {
+      const promises = Array.from(bmsDevicesMap.keys()).map(async key => {
          const bmsElement = bmsDevicesMap.get(key);
          const profilElement = profilDeviceMap.get(key);
+
          if (bmsElement && profilElement) {
+            // console.log("inside if", bmsElement.name, profilElement.name);
             return SpinalGraphService.addChild(bmsElement.id, profilElement.id, OBJECT_TO_BACNET_ITEM_RELATION, SPINAL_RELATION_PTR_LST_TYPE)
          }
          return;
       })
 
       await Promise.all(promises);
-      await SpinalGraphService.addChild(bmsDeviceId, profilId, AUTOMATES_TO_PROFILE_RELATION, SPINAL_RELATION_PTR_LST_TYPE);
-      return;
+      return SpinalGraphService.addChild(bmsDeviceId, profilId, AUTOMATES_TO_PROFILE_RELATION, SPINAL_RELATION_PTR_LST_TYPE);
    }
 
    public static async unLinkProfilToBmsDevice(bmsContextId: string, bmsDeviceId: string): Promise<boolean> {

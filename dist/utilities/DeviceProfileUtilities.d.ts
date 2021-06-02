@@ -6,6 +6,11 @@ export default class DeviceProfileUtilities {
     static INPUT_RELATION: string;
     static OUTPUTS_RELATION: string;
     static OUTPUT_RELATION: string;
+    static PROFIL_TO_BACNET_RELATION: string;
+    static ANALOG_VALUE_RELATION: string;
+    static MULTISTATE_VALUE_RELATION: string;
+    static BINARY_VALUE_RELATION: string;
+    static BACNET_VALUES_TYPE: string[];
     static getDevicesContexts(): Array<{
         name: string;
         type: string;
@@ -42,6 +47,7 @@ export default class DeviceProfileUtilities {
         id: string;
     }>>;
     static getItemIO(nodeId: string): Promise<any>;
-    static getInputOutputMap(profilId: string): Promise<Map<number, any>>;
+    static getProfilBacnetValues(profilId: string, profilContextId?: string): Promise<any>;
+    static getBacnetValuesMap(profilId: string): Promise<Map<number, any>>;
 }
 export { DeviceProfileUtilities };

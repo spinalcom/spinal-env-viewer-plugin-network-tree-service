@@ -84,6 +84,7 @@ class DeviceProfileUtilities {
         const inputsPromises = this.getItemInputs(nodeId);
         const outputsPromises = this.getItemOutputs(nodeId);
         return Promise.all([inputsPromises, outputsPromises]).then((result) => {
+            // console.log("[input, output]", result);
             const children = utilities_1.default._flatten(result);
             const promises = children.map((child) => __awaiter(this, void 0, void 0, function* () {
                 const realNode = spinal_env_viewer_graph_service_1.SpinalGraphService.getRealNode(child.id.get());
@@ -103,10 +104,34 @@ class DeviceProfileUtilities {
             });
         });
     }
-    static getInputOutputMap(profilId) {
+    static getProfilBacnetValues(profilId, profilContextId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (typeof profilContextId === "undefined" || profilContextId.trim().length === 0) {
+                let realNode = spinal_env_viewer_graph_service_1.SpinalGraphService.getRealNode(profilId);
+                if (!realNode)
+                    return;
+                const contextIds = realNode.getContextIds();
+                profilContextId = contextIds.find(id => {
+                    let info = spinal_env_viewer_graph_service_1.SpinalGraphService.getInfo(id);
+                    return info && info.type.get() === this.DEVICE_PROFILE_CONTEXT;
+                });
+            }
+            if (!profilContextId)
+                return;
+            const bacnetValues = yield spinal_env_viewer_graph_service_1.SpinalGraphService.findInContext(profilId, profilContextId, (node) => {
+                if (this.BACNET_VALUES_TYPE.indexOf(node.getType().get()) !== -1) {
+                    spinal_env_viewer_graph_service_1.SpinalGraphService._addNode(node);
+                    return true;
+                }
+                return false;
+            });
+            return bacnetValues.map(el => el.get());
+        });
+    }
+    static getBacnetValuesMap(profilId) {
         return __awaiter(this, void 0, void 0, function* () {
             const bimDeviceMap = new Map();
-            const attrs = yield this.getItemIO(profilId);
+            const attrs = yield this.getProfilBacnetValues(profilId);
             for (const attr of attrs) {
                 bimDeviceMap.set((parseInt(attr.IDX) + 1), attr);
             }
@@ -123,4 +148,9 @@ DeviceProfileUtilities.INPUTS_RELATION = "hasInputs";
 DeviceProfileUtilities.INPUT_RELATION = "hasInput";
 DeviceProfileUtilities.OUTPUTS_RELATION = "hasOutputs";
 DeviceProfileUtilities.OUTPUT_RELATION = "hasOutput";
+DeviceProfileUtilities.PROFIL_TO_BACNET_RELATION = "hasBacnetValues";
+DeviceProfileUtilities.ANALOG_VALUE_RELATION = "hasAnalogValues";
+DeviceProfileUtilities.MULTISTATE_VALUE_RELATION = "hasMultiStateValues";
+DeviceProfileUtilities.BINARY_VALUE_RELATION = "hasBinaryValues";
+DeviceProfileUtilities.BACNET_VALUES_TYPE = ["networkValue", "binaryValue", "analogValue", "multiStateValue"];
 //# sourceMappingURL=DeviceProfileUtilities.js.map
