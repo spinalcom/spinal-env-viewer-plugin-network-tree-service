@@ -19,10 +19,14 @@ export default class LinkBmsDeviceService {
          await this.unLinkProfilToBmsDevice(bmsContextId, bmsDeviceId);
 
          const promises = [this.getEndpointsMap(bmsContextId, bmsDeviceId), this._getAutomateItems(bimDeviceId)];
+         console.log("promises", promises)
          const res = await Promise.all(promises);
 
          const bmsDevicesMap: any = res[0];
          const bimDevicesMap: any = res[1];
+
+
+
 
          const promises2 = Array.from(bimDevicesMap.keys()).map(key => {
             const bmsElement = bmsDevicesMap.get(key);
@@ -148,6 +152,8 @@ export default class LinkBmsDeviceService {
 
    public static _getBacnetProfilLinked(bimDeviceId: string): Promise<string> {
       return SpinalGraphService.getChildren(bimDeviceId, [AUTOMATES_TO_PROFILE_RELATION]).then((children) => {
+         console.log("children", children);
+
          if (children.length > 0) return children[0].id.get()
       })
    }
@@ -156,6 +162,7 @@ export default class LinkBmsDeviceService {
       const bimDeviceMap = new Map();
 
       return LinkNetworkTreeService.getDeviceAndProfilData(automateId).then((result) => {
+
          const promises = result.valids.map(async ({ automateItem, profileItem }) => {
             const attrs = await DeviceProfileUtilities.getItemIO(profileItem.id);
             for (const attr of attrs) {
@@ -165,7 +172,7 @@ export default class LinkBmsDeviceService {
             return;
          })
 
-         return Promise.all(promises).then((result) => {
+         return Promise.all(promises).then(() => {
             return bimDeviceMap;
          })
 

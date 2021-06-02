@@ -105,18 +105,21 @@ export default class DeviceProfileUtilities {
       const inputsPromises = this.getItemInputs(nodeId);
       const outputsPromises = this.getItemOutputs(nodeId);
 
+      console.log(inputsPromises, outputsPromises);
+
+
       return Promise.all([inputsPromises, outputsPromises]).then((result) => {
          // console.log("[input, output]", result);
 
          const children = Utilities._flatten(result);
 
          const promises = children.map(async child => {
-            const realNode = SpinalGraphService.getRealNode(child.id.get());
+            const realNode = SpinalGraphService.getRealNode(child.id);
 
             const attributes = await serviceDocumentation.getAttributesByCategory(realNode, ATTRIBUTE_CATEGORY);
             // console.log("attributes", attributes)
             const obj = {
-               nodeId: child.id.get()
+               nodeId: child.id
             };
             attributes.forEach(el => {
                obj[el.label.get()] = el.value.get();
@@ -125,8 +128,8 @@ export default class DeviceProfileUtilities {
             return obj;
          })
 
-         return Promise.all(promises).then((result) => {
-            return result;
+         return Promise.all(promises).then((res) => {
+            return res;
             // return result.flat();
          })
       })

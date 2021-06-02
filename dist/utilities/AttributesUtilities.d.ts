@@ -32,6 +32,13 @@ export default class AttributesUtilities {
         attributeName: string;
         displayValue: string;
     }>;
+    static findSpinalAttributeById(nodeId: string, attributeName: string): Promise<{
+        categoryName: string;
+        categoryId: string;
+        displayName: string;
+        attributeName: string;
+        displayValue: string;
+    }>;
     static findAttribute(model: any, dbid: number, attributeName: string): Promise<{
         categoryName: string;
         displayName: string;

@@ -69,6 +69,27 @@ export default class AttributesUtilities {
 
    }
 
+   public static async findSpinalAttributeById(nodeId: string, attributeName: string): Promise<{ categoryName: string; categoryId: string; displayName: string; attributeName: string; displayValue: string; }> {
+      const bimNode = SpinalGraphService.getInfo(nodeId);
+      if (typeof bimNode === "undefined") return;
+
+      // const nodeId = bimNode.id.get();
+      const attributes = await this.getSpinalAttributes(nodeId);
+
+      for (const obj of attributes) {
+         const found = obj.attributes.find(el => el.label.toLowerCase() === attributeName.toLowerCase());
+         if (found) {
+            return {
+               categoryName: obj.name,
+               categoryId: obj.id,
+               displayName: found.label,
+               attributeName: found.label,
+               displayValue: found.value
+            };
+         }
+      }
+   }
+
    public static async findAttribute(model: any, dbid: number, attributeName: string) {
       let attribute = await this.findSpinalAttribute(model, dbid, attributeName);
 

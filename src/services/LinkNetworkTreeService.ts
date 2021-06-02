@@ -97,8 +97,11 @@ export default class LinkNetworkTreeService {
       const res = { valids: [], invalidAutomateItems: [], invalidProfileItems: [], automate: automateInfo }
 
       const profilId = await this.getProfilLinked(automateId);
+
       const automateItems = await this._getAutomateItems(automateId);
       let profilItems = await DeviceProfileUtilities.getItemsList(profilId);
+
+
 
       // const promises = automateItems.map(el => SpinalGraphService.getChildren(el.id,[this.OBJECT_TO_BACNET_ITEM_RELATION]));
 

@@ -22,6 +22,7 @@ class LinkBmsDeviceService {
             if (profilId) {
                 yield this.unLinkProfilToBmsDevice(bmsContextId, bmsDeviceId);
                 const promises = [this.getEndpointsMap(bmsContextId, bmsDeviceId), this._getAutomateItems(bimDeviceId)];
+                console.log("promises", promises);
                 const res = yield Promise.all(promises);
                 const bmsDevicesMap = res[0];
                 const bimDevicesMap = res[1];
@@ -135,6 +136,7 @@ class LinkBmsDeviceService {
     }
     static _getBacnetProfilLinked(bimDeviceId) {
         return spinal_env_viewer_graph_service_1.SpinalGraphService.getChildren(bimDeviceId, [constants_1.AUTOMATES_TO_PROFILE_RELATION]).then((children) => {
+            console.log("children", children);
             if (children.length > 0)
                 return children[0].id.get();
         });
@@ -150,7 +152,7 @@ class LinkBmsDeviceService {
                 }
                 return;
             }));
-            return Promise.all(promises).then((result) => {
+            return Promise.all(promises).then(() => {
                 return bimDeviceMap;
             });
         });

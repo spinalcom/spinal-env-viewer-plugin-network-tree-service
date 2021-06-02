@@ -83,23 +83,24 @@ class DeviceProfileUtilities {
     static getItemIO(nodeId) {
         const inputsPromises = this.getItemInputs(nodeId);
         const outputsPromises = this.getItemOutputs(nodeId);
+        console.log(inputsPromises, outputsPromises);
         return Promise.all([inputsPromises, outputsPromises]).then((result) => {
             // console.log("[input, output]", result);
             const children = utilities_1.default._flatten(result);
             const promises = children.map((child) => __awaiter(this, void 0, void 0, function* () {
-                const realNode = spinal_env_viewer_graph_service_1.SpinalGraphService.getRealNode(child.id.get());
+                const realNode = spinal_env_viewer_graph_service_1.SpinalGraphService.getRealNode(child.id);
                 const attributes = yield spinal_env_viewer_plugin_documentation_service_1.serviceDocumentation.getAttributesByCategory(realNode, constants_2.ATTRIBUTE_CATEGORY);
                 // console.log("attributes", attributes)
                 const obj = {
-                    nodeId: child.id.get()
+                    nodeId: child.id
                 };
                 attributes.forEach(el => {
                     obj[el.label.get()] = el.value.get();
                 });
                 return obj;
             }));
-            return Promise.all(promises).then((result) => {
-                return result;
+            return Promise.all(promises).then((res) => {
+                return res;
                 // return result.flat();
             });
         });

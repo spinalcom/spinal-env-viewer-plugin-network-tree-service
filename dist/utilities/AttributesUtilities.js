@@ -75,6 +75,27 @@ class AttributesUtilities {
             }
         });
     }
+    static findSpinalAttributeById(nodeId, attributeName) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const bimNode = spinal_env_viewer_graph_service_1.SpinalGraphService.getInfo(nodeId);
+            if (typeof bimNode === "undefined")
+                return;
+            // const nodeId = bimNode.id.get();
+            const attributes = yield this.getSpinalAttributes(nodeId);
+            for (const obj of attributes) {
+                const found = obj.attributes.find(el => el.label.toLowerCase() === attributeName.toLowerCase());
+                if (found) {
+                    return {
+                        categoryName: obj.name,
+                        categoryId: obj.id,
+                        displayName: found.label,
+                        attributeName: found.label,
+                        displayValue: found.value
+                    };
+                }
+            }
+        });
+    }
     static findAttribute(model, dbid, attributeName) {
         return __awaiter(this, void 0, void 0, function* () {
             let attribute = yield this.findSpinalAttribute(model, dbid, attributeName);
