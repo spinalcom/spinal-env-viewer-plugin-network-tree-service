@@ -10,7 +10,6 @@ import Utilities from "../utilities/utilities";
 
 export default class LinkBmsDeviceService {
 
-
    public static async LinkBmsDeviceToBimDevices(bmsContextId: string, bmsDeviceId: string, bimDeviceId: string): Promise<void> {
 
       const profilId = await this._getBacnetProfilLinked(bimDeviceId);
@@ -18,15 +17,9 @@ export default class LinkBmsDeviceService {
       if (profilId) {
          await this.unLinkProfilToBmsDevice(bmsContextId, bmsDeviceId);
 
-         const promises = [this.getEndpointsMap(bmsContextId, bmsDeviceId), this._getAutomateItems(bimDeviceId)];
-         console.log("promises", promises)
-         const res = await Promise.all(promises);
+         const promises = [this.getBmsEndpointsMap(bmsContextId, bmsDeviceId), this._getAutomateItems(bimDeviceId)];
 
-         const bmsDevicesMap: any = res[0];
-         const bimDevicesMap: any = res[1];
-
-
-
+         const [bmsDevicesMap, bimDevicesMap] = await Promise.all(promises);;
 
          const promises2 = Array.from(bimDevicesMap.keys()).map(key => {
             const bmsElement = bmsDevicesMap.get(key);
@@ -55,11 +48,8 @@ export default class LinkBmsDeviceService {
       const profilId = await this._getBacnetProfilLinked(bimDeviceId);
 
       if (profilId) {
-         const promises = [this.getEndpointsMap(bmsContextId, bmsDeviceId), this._getAutomateItems(bimDeviceId)];
-         const res = await Promise.all(promises);
-
-         const bmsDevicesMap: any = res[0];
-         const bimDevicesMap: any = res[1];
+         const promises = [this.getBmsEndpointsMap(bmsContextId, bmsDeviceId), this._getAutomateItems(bimDeviceId)];
+         const [bmsDevicesMap, bimDevicesMap] = await Promise.all(promises);
 
          const promises2 = Array.from(bimDevicesMap.keys()).map(key => {
             const bmsElement = bmsDevicesMap.get(key);
@@ -89,7 +79,7 @@ export default class LinkBmsDeviceService {
          await this.unLinkProfilToBmsDevice(bmsContextId, bmsDeviceId);
       }
 
-      const endpointMapPromise = this.getEndpointsMap(bmsContextId, bmsDeviceId);
+      const endpointMapPromise = this.getBmsEndpointsMap(bmsContextId, bmsDeviceId);
       const profilMapPromise = DeviceProfileUtilities.getBacnetValuesMap(profilId);
 
 
@@ -113,6 +103,7 @@ export default class LinkBmsDeviceService {
       return SpinalGraphService.addChild(bmsDeviceId, profilId, AUTOMATES_TO_PROFILE_RELATION, SPINAL_RELATION_PTR_LST_TYPE);
    }
 
+
    public static async unLinkProfilToBmsDevice(bmsContextId: string, bmsDeviceId: string): Promise<boolean> {
       const relations = SpinalGraphService.getRelationNames(bmsDeviceId);
 
@@ -135,7 +126,7 @@ export default class LinkBmsDeviceService {
       return false;
    }
 
-   public static getEndpointsMap(bmsContextId: string, bmsDeviceId: string): Promise<Map<number, INodeInfoOBJ>> {
+   public static getBmsEndpointsMap(bmsContextId: string, bmsDeviceId: string): Promise<Map<number, INodeInfoOBJ>> {
       const bmsDeviceMap = new Map();
 
       return SpinalGraphService.findInContext(bmsDeviceId, bmsContextId, (node) => {

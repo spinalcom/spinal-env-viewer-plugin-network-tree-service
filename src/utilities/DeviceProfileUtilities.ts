@@ -25,6 +25,9 @@ export default class DeviceProfileUtilities {
    public static BACNET_VALUES_TYPE: string[] = ["networkValue", "binaryValue", "analogValue", "multiStateValue"];
 
 
+   public static profilsMaps: Map<string,Map<number,any>> = new Map();
+   
+
    public static getDevicesContexts(): Array<{ name: string; type: string; id: string }> {
       const result = SpinalGraphService.getContextWithType(this.DEVICE_PROFILE_CONTEXT)
       return result.map(el => el.info.get())
@@ -105,9 +108,6 @@ export default class DeviceProfileUtilities {
       const inputsPromises = this.getItemInputs(nodeId);
       const outputsPromises = this.getItemOutputs(nodeId);
 
-      console.log(inputsPromises, outputsPromises);
-
-
       return Promise.all([inputsPromises, outputsPromises]).then((result) => {
          // console.log("[input, output]", result);
 
@@ -161,6 +161,11 @@ export default class DeviceProfileUtilities {
    }
 
    public static async getBacnetValuesMap(profilId: string): Promise<Map<number, any>> {
+
+      if(this.profilsMaps.get(profilId)) {
+         return this.profilsMaps.get(profilId);
+      }
+
       const bimDeviceMap: Map<number, any> = new Map();
 
       const attrs = await this.getProfilBacnetValues(profilId);
@@ -169,6 +174,7 @@ export default class DeviceProfileUtilities {
          bimDeviceMap.set((parseInt((<any>attr).IDX) + 1), attr);
       }
 
+      this.profilsMaps.set(profilId, bimDeviceMap);
       return bimDeviceMap;
    }
 }
