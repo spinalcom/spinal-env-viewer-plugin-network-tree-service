@@ -11,6 +11,7 @@ export default class DeviceProfileUtilities {
     static MULTISTATE_VALUE_RELATION: string;
     static BINARY_VALUE_RELATION: string;
     static BACNET_VALUES_TYPE: string[];
+    static profilsMaps: Map<string, Map<number, any>>;
     static getDevicesContexts(): Array<{
         name: string;
         type: string;

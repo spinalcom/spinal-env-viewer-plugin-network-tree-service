@@ -111,7 +111,9 @@ export default class GenerateNetworkTreeService {
       }
 
       return this._addSpinalAttribute(id, node.namingConvention).then(async () => {
-         await SpinalGraphService.addChildInContext(parentId, id, contextId, relationName, SPINAL_RELATION_PTR_LST_TYPE);
+         try {
+            await SpinalGraphService.addChildInContext(parentId, id, contextId, relationName, SPINAL_RELATION_PTR_LST_TYPE);
+         } catch (error) {}
 
          if (node.children && node.children.length > 0) {
             return Promise.all(node.children.map(el => this._createNodes(contextId, el, id)))
@@ -119,9 +121,6 @@ export default class GenerateNetworkTreeService {
 
          return SpinalGraphService.getRealNode(id);
       })
-
-
-
    }
 
    ////////////////////////////////////////////////////////////////////////////////

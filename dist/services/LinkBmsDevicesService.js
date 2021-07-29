@@ -21,11 +21,9 @@ class LinkBmsDeviceService {
             const profilId = yield this._getBacnetProfilLinked(bimDeviceId);
             if (profilId) {
                 yield this.unLinkProfilToBmsDevice(bmsContextId, bmsDeviceId);
-                const promises = [this.getEndpointsMap(bmsContextId, bmsDeviceId), this._getAutomateItems(bimDeviceId)];
-                console.log("promises", promises);
-                const res = yield Promise.all(promises);
-                const bmsDevicesMap = res[0];
-                const bimDevicesMap = res[1];
+                const promises = [this.getBmsEndpointsMap(bmsContextId, bmsDeviceId), this._getAutomateItems(bimDeviceId)];
+                const [bmsDevicesMap, bimDevicesMap] = yield Promise.all(promises);
+                ;
                 const promises2 = Array.from(bimDevicesMap.keys()).map(key => {
                     const bmsElement = bmsDevicesMap.get(key);
                     const value = bimDevicesMap.get(key);
@@ -51,10 +49,8 @@ class LinkBmsDeviceService {
         return __awaiter(this, void 0, void 0, function* () {
             const profilId = yield this._getBacnetProfilLinked(bimDeviceId);
             if (profilId) {
-                const promises = [this.getEndpointsMap(bmsContextId, bmsDeviceId), this._getAutomateItems(bimDeviceId)];
-                const res = yield Promise.all(promises);
-                const bmsDevicesMap = res[0];
-                const bimDevicesMap = res[1];
+                const promises = [this.getBmsEndpointsMap(bmsContextId, bmsDeviceId), this._getAutomateItems(bimDeviceId)];
+                const [bmsDevicesMap, bimDevicesMap] = yield Promise.all(promises);
                 const promises2 = Array.from(bimDevicesMap.keys()).map(key => {
                     const bmsElement = bmsDevicesMap.get(key);
                     const value = bimDevicesMap.get(key);
@@ -82,7 +78,7 @@ class LinkBmsDeviceService {
             else {
                 yield this.unLinkProfilToBmsDevice(bmsContextId, bmsDeviceId);
             }
-            const endpointMapPromise = this.getEndpointsMap(bmsContextId, bmsDeviceId);
+            const endpointMapPromise = this.getBmsEndpointsMap(bmsContextId, bmsDeviceId);
             const profilMapPromise = DeviceProfileUtilities_1.default.getBacnetValuesMap(profilId);
             const res = yield Promise.all([endpointMapPromise, profilMapPromise]);
             const bmsDevicesMap = res[0];
@@ -121,7 +117,7 @@ class LinkBmsDeviceService {
             return false;
         });
     }
-    static getEndpointsMap(bmsContextId, bmsDeviceId) {
+    static getBmsEndpointsMap(bmsContextId, bmsDeviceId) {
         const bmsDeviceMap = new Map();
         return spinal_env_viewer_graph_service_1.SpinalGraphService.findInContext(bmsDeviceId, bmsContextId, (node) => {
             if (node.getType().get() === spinal_model_bmsnetwork_1.SpinalBmsEndpoint.nodeTypeName) {

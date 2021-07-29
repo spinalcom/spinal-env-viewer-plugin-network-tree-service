@@ -83,7 +83,6 @@ class DeviceProfileUtilities {
     static getItemIO(nodeId) {
         const inputsPromises = this.getItemInputs(nodeId);
         const outputsPromises = this.getItemOutputs(nodeId);
-        console.log(inputsPromises, outputsPromises);
         return Promise.all([inputsPromises, outputsPromises]).then((result) => {
             // console.log("[input, output]", result);
             const children = utilities_1.default._flatten(result);
@@ -131,11 +130,15 @@ class DeviceProfileUtilities {
     }
     static getBacnetValuesMap(profilId) {
         return __awaiter(this, void 0, void 0, function* () {
+            if (this.profilsMaps.get(profilId)) {
+                return this.profilsMaps.get(profilId);
+            }
             const bimDeviceMap = new Map();
             const attrs = yield this.getProfilBacnetValues(profilId);
             for (const attr of attrs) {
                 bimDeviceMap.set((parseInt(attr.IDX) + 1), attr);
             }
+            this.profilsMaps.set(profilId, bimDeviceMap);
             return bimDeviceMap;
         });
     }
@@ -154,4 +157,5 @@ DeviceProfileUtilities.ANALOG_VALUE_RELATION = "hasAnalogValues";
 DeviceProfileUtilities.MULTISTATE_VALUE_RELATION = "hasMultiStateValues";
 DeviceProfileUtilities.BINARY_VALUE_RELATION = "hasBinaryValues";
 DeviceProfileUtilities.BACNET_VALUES_TYPE = ["networkValue", "binaryValue", "analogValue", "multiStateValue"];
+DeviceProfileUtilities.profilsMaps = new Map();
 //# sourceMappingURL=DeviceProfileUtilities.js.map

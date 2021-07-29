@@ -94,8 +94,9 @@ class LinkNetworkTreeService {
         });
     }
     static getDeviceAndProfilData(automateId) {
+        var _a;
         return __awaiter(this, void 0, void 0, function* () {
-            const automateInfo = spinal_env_viewer_graph_service_1.SpinalGraphService.getInfo(automateId).get();
+            const automateInfo = ((_a = spinal_env_viewer_graph_service_1.SpinalGraphService.getInfo(automateId)) === null || _a === void 0 ? void 0 : _a.get()) || {};
             const res = { valids: [], invalidAutomateItems: [], invalidProfileItems: [], automate: automateInfo };
             const profilId = yield this.getProfilLinked(automateId);
             const automateItems = yield this._getAutomateItems(automateId);

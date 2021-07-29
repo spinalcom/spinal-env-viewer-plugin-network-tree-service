@@ -101,7 +101,10 @@ class GenerateNetworkTreeService {
                 relationName = constants_1.NETWORK_RELATION;
             }
             return this._addSpinalAttribute(id, node.namingConvention).then(() => __awaiter(this, void 0, void 0, function* () {
-                yield spinal_env_viewer_graph_service_1.SpinalGraphService.addChildInContext(parentId, id, contextId, relationName, spinal_env_viewer_graph_service_1.SPINAL_RELATION_PTR_LST_TYPE);
+                try {
+                    yield spinal_env_viewer_graph_service_1.SpinalGraphService.addChildInContext(parentId, id, contextId, relationName, spinal_env_viewer_graph_service_1.SPINAL_RELATION_PTR_LST_TYPE);
+                }
+                catch (error) { }
                 if (node.children && node.children.length > 0) {
                     return Promise.all(node.children.map(el => this._createNodes(contextId, el, id)));
                 }

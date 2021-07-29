@@ -4,7 +4,7 @@ export default class LinkBmsDeviceService {
     static unLinkBmsDeviceToBimDevices(bmsContextId: string, bmsDeviceId: string, bimDeviceId: string): Promise<void>;
     static linkProfilToBmsDevice(bmsContextId: string, bmsDeviceId: string, profilId: string): Promise<boolean>;
     static unLinkProfilToBmsDevice(bmsContextId: string, bmsDeviceId: string): Promise<boolean>;
-    static getEndpointsMap(bmsContextId: string, bmsDeviceId: string): Promise<Map<number, INodeInfoOBJ>>;
+    static getBmsEndpointsMap(bmsContextId: string, bmsDeviceId: string): Promise<Map<number, INodeInfoOBJ>>;
     static _getBacnetProfilLinked(bimDeviceId: string): Promise<string>;
     private static _getAutomateItems;
     private static bmsDevicehasBimDevice;

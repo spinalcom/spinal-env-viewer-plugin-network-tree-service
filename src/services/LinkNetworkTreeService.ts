@@ -93,7 +93,7 @@ export default class LinkNetworkTreeService {
 
    public static async getDeviceAndProfilData(automateId: string): Promise<IDataFormated> {
 
-      const automateInfo = SpinalGraphService.getInfo(automateId).get();
+      const automateInfo = SpinalGraphService.getInfo(automateId)?.get() || {};
       const res = { valids: [], invalidAutomateItems: [], invalidProfileItems: [], automate: automateInfo }
 
       const profilId = await this.getProfilLinked(automateId);
