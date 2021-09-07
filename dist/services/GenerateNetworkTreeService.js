@@ -126,7 +126,8 @@ class GenerateNetworkTreeService {
             const obj = { model, dbId: dbid };
             obj["property"] = yield AttributesUtilities_1.AttributesUtilities.findAttribute(model, dbid, attributeName);
             if (namingConventionConfig) {
-                obj["namingConvention"] = yield this._getNamingConvention(obj.property, namingConventionConfig);
+                const namingCProperty = yield AttributesUtilities_1.AttributesUtilities.findAttribute(model, dbid, namingConventionConfig.attributeName);
+                obj["namingConvention"] = yield this._getNamingConvention(namingCProperty, namingConventionConfig);
             }
             return obj;
         }));

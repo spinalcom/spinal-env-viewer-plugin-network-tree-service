@@ -113,7 +113,7 @@ export default class GenerateNetworkTreeService {
       return this._addSpinalAttribute(id, node.namingConvention).then(async () => {
          try {
             await SpinalGraphService.addChildInContext(parentId, id, contextId, relationName, SPINAL_RELATION_PTR_LST_TYPE);
-         } catch (error) {}
+         } catch (error) { }
 
          if (node.children && node.children.length > 0) {
             return Promise.all(node.children.map(el => this._createNodes(contextId, el, id)))
@@ -127,7 +127,9 @@ export default class GenerateNetworkTreeService {
    ////                                PRIVATES                                  //
    ////////////////////////////////////////////////////////////////////////////////
 
-   private static _getItemPropertiesFormatted(model: any, itemList: Array<number>, attributeName: string, namingConventionConfig: {}) {
+   private static _getItemPropertiesFormatted(model: any, itemList: Array<number>, attributeName: string, namingConventionConfig: {
+      attributeName: string, useAttrValue: boolean, personalized: any
+   }) {
       const promises = itemList.map(async dbid => {
          // el.model = model;
          // el.property = this._getAttributeByName(el.properties, attributeName);
@@ -140,7 +142,8 @@ export default class GenerateNetworkTreeService {
          obj["property"] = await AttributesUtilities.findAttribute(model, dbid, attributeName);
 
          if (namingConventionConfig) {
-            obj["namingConvention"] = await this._getNamingConvention((<any>obj).property, namingConventionConfig);
+            const namingCProperty = await AttributesUtilities.findAttribute(model, dbid, namingConventionConfig.attributeName)
+            obj["namingConvention"] = await this._getNamingConvention(namingCProperty, namingConventionConfig);
          }
 
          return obj;
