@@ -132,7 +132,7 @@ export default class LinkBmsDeviceService {
       return SpinalGraphService.findInContext(bmsDeviceId, bmsContextId, (node) => {
          if (node.getType().get() === SpinalBmsEndpoint.nodeTypeName) {
             (<any>SpinalGraphService)._addNode(node)
-            bmsDeviceMap.set(node.info.idNetwork.get(), node.info.get());
+            bmsDeviceMap.set(`${node.info.typeId.get()}_${node.info.idNetwork.get()}`, node.info.get());
             return true;
          }
          return false;

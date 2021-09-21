@@ -122,7 +122,7 @@ class LinkBmsDeviceService {
         return spinal_env_viewer_graph_service_1.SpinalGraphService.findInContext(bmsDeviceId, bmsContextId, (node) => {
             if (node.getType().get() === spinal_model_bmsnetwork_1.SpinalBmsEndpoint.nodeTypeName) {
                 spinal_env_viewer_graph_service_1.SpinalGraphService._addNode(node);
-                bmsDeviceMap.set(node.info.idNetwork.get(), node.info.get());
+                bmsDeviceMap.set(`${node.info.typeId.get()}_${node.info.idNetwork.get()}`, node.info.get());
                 return true;
             }
             return false;

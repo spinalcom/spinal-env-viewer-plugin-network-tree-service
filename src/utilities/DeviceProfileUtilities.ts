@@ -3,6 +3,7 @@ import { DEVICE_RELATION_NAME, PART_RELATION_NAME } from "spinal-env-viewer-plug
 import Utilities from "../utilities/utilities";
 import { serviceDocumentation } from "spinal-env-viewer-plugin-documentation-service";
 import { ATTRIBUTE_CATEGORY } from "../data/constants";
+import * as bacnet from "bacstack";
 
 export default class DeviceProfileUtilities {
 
@@ -25,8 +26,8 @@ export default class DeviceProfileUtilities {
    public static BACNET_VALUES_TYPE: string[] = ["networkValue", "binaryValue", "analogValue", "multiStateValue"];
 
 
-   public static profilsMaps: Map<string,Map<number,any>> = new Map();
-   
+   public static profilsMaps: Map<string, Map<number, any>> = new Map();
+
 
    public static getDevicesContexts(): Array<{ name: string; type: string; id: string }> {
       const result = SpinalGraphService.getContextWithType(this.DEVICE_PROFILE_CONTEXT)
@@ -157,25 +158,34 @@ export default class DeviceProfileUtilities {
          return false;
       })
 
-      return bacnetValues.map(el => el.get());
+      return bacnetValues.map(el => {
+         const info = el.get();
+         info.typeId = this._getBacnetObjectType(el.type);
+         return info;
+      });
    }
 
-   public static async getBacnetValuesMap(profilId: string): Promise<Map<number, any>> {
+   public static async getBacnetValuesMap(profilId: string): Promise<Map<any, any>> {
 
-      if(this.profilsMaps.get(profilId)) {
+      if (this.profilsMaps.get(profilId)) {
          return this.profilsMaps.get(profilId);
       }
 
-      const bimDeviceMap: Map<number, any> = new Map();
+      const bimDeviceMap: Map<any, any> = new Map();
 
       const attrs = await this.getProfilBacnetValues(profilId);
 
       for (const attr of attrs) {
-         bimDeviceMap.set((parseInt((<any>attr).IDX) + 1), attr);
+         bimDeviceMap.set(`${attr.typeId}_${(parseInt((<any>attr).IDX) + 1)}`, attr);
       }
 
       this.profilsMaps.set(profilId, bimDeviceMap);
       return bimDeviceMap;
+   }
+
+   public static _getBacnetObjectType(type) {
+      const objectName = ("object_" + type.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`)).toUpperCase();
+      return bacnet.enum.ObjectTypes[objectName];
    }
 }
 

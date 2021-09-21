@@ -1,6 +1,6 @@
 {
   "name": "spinal-env-viewer-plugin-network-tree-service",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "description": "",
   "main": "dist/index.js",
   "scripts": {
@@ -13,7 +13,8 @@
     "spinal-env-viewer-plugin-forge": "git+https://github.com/spinalcom/spinal-env-viewer-plugin-forge.git",
     "spinal-env-viewer-plugin-device_profile": "git+https://github.com/spinalcom/spinal-env-viewer-plugin-device_profile.git",
     "spinal-env-viewer-plugin-documentation-service": "git+https://github.com/spinalcom/spinal-env-viewer-plugin-documentation-service.git",
-    "spinal-core-connectorjs_type": "git+https://github.com/spinalcom/spinal-core-connectorjs_type.git"
+    "spinal-core-connectorjs_type": "git+https://github.com/spinalcom/spinal-core-connectorjs_type.git",
+    "bacstack": "0.0.1-beta.13"
   },
   "keywords": [],
   "author": "",

@@ -15,6 +15,7 @@ const constants_1 = require("spinal-env-viewer-plugin-device_profile/constants")
 const utilities_1 = require("../utilities/utilities");
 const spinal_env_viewer_plugin_documentation_service_1 = require("spinal-env-viewer-plugin-documentation-service");
 const constants_2 = require("../data/constants");
+const bacnet = require("bacstack");
 class DeviceProfileUtilities {
     static getDevicesContexts() {
         const result = spinal_env_viewer_graph_service_1.SpinalGraphService.getContextWithType(this.DEVICE_PROFILE_CONTEXT);
@@ -125,7 +126,11 @@ class DeviceProfileUtilities {
                 }
                 return false;
             });
-            return bacnetValues.map(el => el.get());
+            return bacnetValues.map(el => {
+                const info = el.get();
+                info.typeId = this._getBacnetObjectType(el.type);
+                return info;
+            });
         });
     }
     static getBacnetValuesMap(profilId) {
@@ -136,11 +141,15 @@ class DeviceProfileUtilities {
             const bimDeviceMap = new Map();
             const attrs = yield this.getProfilBacnetValues(profilId);
             for (const attr of attrs) {
-                bimDeviceMap.set((parseInt(attr.IDX) + 1), attr);
+                bimDeviceMap.set(`${attr.typeId}_${(parseInt(attr.IDX) + 1)}`, attr);
             }
             this.profilsMaps.set(profilId, bimDeviceMap);
             return bimDeviceMap;
         });
+    }
+    static _getBacnetObjectType(type) {
+        const objectName = ("object_" + type.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`)).toUpperCase();
+        return bacnet.enum.ObjectTypes[objectName];
     }
 }
 exports.default = DeviceProfileUtilities;

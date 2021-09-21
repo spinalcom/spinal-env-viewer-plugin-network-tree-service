@@ -49,6 +49,7 @@ export default class DeviceProfileUtilities {
     }>>;
     static getItemIO(nodeId: string): Promise<any>;
     static getProfilBacnetValues(profilId: string, profilContextId?: string): Promise<any>;
-    static getBacnetValuesMap(profilId: string): Promise<Map<number, any>>;
+    static getBacnetValuesMap(profilId: string): Promise<Map<any, any>>;
+    static _getBacnetObjectType(type: any): any;
 }
 export { DeviceProfileUtilities };
