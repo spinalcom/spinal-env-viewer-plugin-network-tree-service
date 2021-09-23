@@ -56,7 +56,11 @@ export default class LinkNetworkTreeService {
          await this.unLinkAutomateItemToProfilItem(automateItemId, itemLinkedId);
       }
 
-      return SpinalGraphService.addChild(automateItemId, profilItemId, OBJECT_TO_BACNET_ITEM_RELATION, SPINAL_RELATION_PTR_LST_TYPE);
+      try {
+         return SpinalGraphService.addChild(automateItemId, profilItemId, OBJECT_TO_BACNET_ITEM_RELATION, SPINAL_RELATION_PTR_LST_TYPE);
+      } catch (error) {
+
+      }
    }
 
    public static async getProfilLinked(automateId: string): Promise<string> {

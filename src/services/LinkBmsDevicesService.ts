@@ -33,10 +33,18 @@ export default class LinkBmsDeviceService {
             return;
          })
 
-         await Promise.all(promises2);
-         await SpinalGraphService.addChild(bmsDeviceId, profilId, AUTOMATES_TO_PROFILE_RELATION, SPINAL_RELATION_PTR_LST_TYPE);
-         await SpinalGraphService.addChild(bimDeviceId, bmsDeviceId, SpinalBmsDevice.relationName, SPINAL_RELATION_PTR_LST_TYPE);
-         return;
+         try {
+            await Promise.all(promises2);
+         } catch (error) {
+
+         }
+
+         try {
+            await SpinalGraphService.addChild(bmsDeviceId, profilId, AUTOMATES_TO_PROFILE_RELATION, SPINAL_RELATION_PTR_LST_TYPE);
+            await SpinalGraphService.addChild(bimDeviceId, bmsDeviceId, SpinalBmsDevice.relationName, SPINAL_RELATION_PTR_LST_TYPE);
+            return;
+         } catch (error) { }
+
 
       } else {
          throw new Error(`${bimDeviceId} has no profil linked`);
@@ -94,13 +102,18 @@ export default class LinkBmsDeviceService {
 
          if (bmsElement && profilElement) {
             // console.log("inside if", bmsElement.name, profilElement.name);
-            return SpinalGraphService.addChild(bmsElement.id, profilElement.id, OBJECT_TO_BACNET_ITEM_RELATION, SPINAL_RELATION_PTR_LST_TYPE)
+            try {
+               return SpinalGraphService.addChild(bmsElement.id, profilElement.id, OBJECT_TO_BACNET_ITEM_RELATION, SPINAL_RELATION_PTR_LST_TYPE)
+            } catch (error) { }
          }
          return;
       })
 
       await Promise.all(promises);
-      return SpinalGraphService.addChild(bmsDeviceId, profilId, AUTOMATES_TO_PROFILE_RELATION, SPINAL_RELATION_PTR_LST_TYPE);
+      try {
+         return SpinalGraphService.addChild(bmsDeviceId, profilId, AUTOMATES_TO_PROFILE_RELATION, SPINAL_RELATION_PTR_LST_TYPE);
+      } catch (error) {
+      }
    }
 
 

@@ -58,7 +58,11 @@ class LinkNetworkTreeService {
                     return;
                 yield this.unLinkAutomateItemToProfilItem(automateItemId, itemLinkedId);
             }
-            return spinal_env_viewer_graph_service_1.SpinalGraphService.addChild(automateItemId, profilItemId, constants_1.OBJECT_TO_BACNET_ITEM_RELATION, spinal_env_viewer_graph_service_1.SPINAL_RELATION_PTR_LST_TYPE);
+            try {
+                return spinal_env_viewer_graph_service_1.SpinalGraphService.addChild(automateItemId, profilItemId, constants_1.OBJECT_TO_BACNET_ITEM_RELATION, spinal_env_viewer_graph_service_1.SPINAL_RELATION_PTR_LST_TYPE);
+            }
+            catch (error) {
+            }
         });
     }
     static getProfilLinked(automateId) {

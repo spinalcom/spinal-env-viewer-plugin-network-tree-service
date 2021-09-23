@@ -35,10 +35,17 @@ class LinkBmsDeviceService {
                     }
                     return;
                 });
-                yield Promise.all(promises2);
-                yield spinal_env_viewer_graph_service_1.SpinalGraphService.addChild(bmsDeviceId, profilId, constants_1.AUTOMATES_TO_PROFILE_RELATION, spinal_env_viewer_graph_service_1.SPINAL_RELATION_PTR_LST_TYPE);
-                yield spinal_env_viewer_graph_service_1.SpinalGraphService.addChild(bimDeviceId, bmsDeviceId, spinal_model_bmsnetwork_1.SpinalBmsDevice.relationName, spinal_env_viewer_graph_service_1.SPINAL_RELATION_PTR_LST_TYPE);
-                return;
+                try {
+                    yield Promise.all(promises2);
+                }
+                catch (error) {
+                }
+                try {
+                    yield spinal_env_viewer_graph_service_1.SpinalGraphService.addChild(bmsDeviceId, profilId, constants_1.AUTOMATES_TO_PROFILE_RELATION, spinal_env_viewer_graph_service_1.SPINAL_RELATION_PTR_LST_TYPE);
+                    yield spinal_env_viewer_graph_service_1.SpinalGraphService.addChild(bimDeviceId, bmsDeviceId, spinal_model_bmsnetwork_1.SpinalBmsDevice.relationName, spinal_env_viewer_graph_service_1.SPINAL_RELATION_PTR_LST_TYPE);
+                    return;
+                }
+                catch (error) { }
             }
             else {
                 throw new Error(`${bimDeviceId} has no profil linked`);
@@ -88,12 +95,19 @@ class LinkBmsDeviceService {
                 const profilElement = profilDeviceMap.get(key);
                 if (bmsElement && profilElement) {
                     // console.log("inside if", bmsElement.name, profilElement.name);
-                    return spinal_env_viewer_graph_service_1.SpinalGraphService.addChild(bmsElement.id, profilElement.id, constants_1.OBJECT_TO_BACNET_ITEM_RELATION, spinal_env_viewer_graph_service_1.SPINAL_RELATION_PTR_LST_TYPE);
+                    try {
+                        return spinal_env_viewer_graph_service_1.SpinalGraphService.addChild(bmsElement.id, profilElement.id, constants_1.OBJECT_TO_BACNET_ITEM_RELATION, spinal_env_viewer_graph_service_1.SPINAL_RELATION_PTR_LST_TYPE);
+                    }
+                    catch (error) { }
                 }
                 return;
             }));
             yield Promise.all(promises);
-            return spinal_env_viewer_graph_service_1.SpinalGraphService.addChild(bmsDeviceId, profilId, constants_1.AUTOMATES_TO_PROFILE_RELATION, spinal_env_viewer_graph_service_1.SPINAL_RELATION_PTR_LST_TYPE);
+            try {
+                return spinal_env_viewer_graph_service_1.SpinalGraphService.addChild(bmsDeviceId, profilId, constants_1.AUTOMATES_TO_PROFILE_RELATION, spinal_env_viewer_graph_service_1.SPINAL_RELATION_PTR_LST_TYPE);
+            }
+            catch (error) {
+            }
         });
     }
     static unLinkProfilToBmsDevice(bmsContextId, bmsDeviceId) {
