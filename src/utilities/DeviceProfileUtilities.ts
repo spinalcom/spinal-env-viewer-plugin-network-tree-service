@@ -1,4 +1,4 @@
-import { SpinalGraphService, SPINAL_RELATION_PTR_LST_TYPE } from "spinal-env-viewer-graph-service";
+import { SpinalGraphService, SpinalNodeRef, SPINAL_RELATION_PTR_LST_TYPE } from "spinal-env-viewer-graph-service";
 import { DEVICE_RELATION_NAME, PART_RELATION_NAME } from "spinal-env-viewer-plugin-device_profile/constants";
 import Utilities from "../utilities/utilities";
 import { serviceDocumentation } from "spinal-env-viewer-plugin-documentation-service";
@@ -22,6 +22,10 @@ export default class DeviceProfileUtilities {
    public static ANALOG_VALUE_RELATION: string = "hasAnalogValues";
    public static MULTISTATE_VALUE_RELATION: string = "hasMultiStateValues";
    public static BINARY_VALUE_RELATION: string = "hasBinaryValues";
+
+   public static ITEMS_TO_SUPERVISION: string = "hasSupervisionNode";
+   public static SUPERVISION_TO_MEASURES: string = "hasMeasures";
+   public static MEASURE_TO_ITEMS: string = "hasMeasure";
 
    public static BACNET_VALUES_TYPE: string[] = ["networkValue", "binaryValue", "analogValue", "multiStateValue"];
 
@@ -136,6 +140,37 @@ export default class DeviceProfileUtilities {
       })
    }
 
+
+   public static async getMeasures(nodeId: string): Promise<any> {
+      const supervisions: Array<SpinalNodeRef> = await SpinalGraphService.getChildren(nodeId, [this.ITEMS_TO_SUPERVISION]);
+      const measures: Array<SpinalNodeRef> = await SpinalGraphService.getChildren(supervisions[0]?.id?.get(), [this.SUPERVISION_TO_MEASURES]);
+      const children: Array<SpinalNodeRef> = await SpinalGraphService.getChildren(measures[0]?.id?.get(), [this.MEASURE_TO_ITEMS]);
+
+      const promises = children.map(async child => {
+         const realNode = SpinalGraphService.getRealNode(child.id.get());
+
+         const attributes = await serviceDocumentation.getAttributesByCategory(realNode, ATTRIBUTE_CATEGORY);
+         // console.log("attributes", attributes)
+         const obj = {
+            nodeId: child.id.get(),
+            typeId: this._getBacnetObjectType(child.type.get())
+         };
+
+         for (const el of attributes) {
+            obj[el.label.get()] = el.value.get();
+         }
+         // attributes.forEach(el => {
+
+         // })
+
+         return obj;
+      })
+
+      return Promise.all(promises).then((res) => {
+         return res;
+         // return result.flat();
+      })
+   }
 
    public static async getProfilBacnetValues(profilId: string, profilContextId?: string) {
       if (typeof profilContextId === "undefined" || profilContextId.trim().length === 0) {

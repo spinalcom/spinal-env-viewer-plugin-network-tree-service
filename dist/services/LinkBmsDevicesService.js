@@ -28,24 +28,25 @@ class LinkBmsDeviceService {
                     const bmsElement = bmsDevicesMap.get(key);
                     const value = bimDevicesMap.get(key);
                     if (bmsElement && value) {
-                        return Promise.all([
-                            spinal_env_viewer_graph_service_1.SpinalGraphService.addChild(value.parentId, bmsElement.id, spinal_model_bmsnetwork_1.SpinalBmsEndpoint.relationName, spinal_env_viewer_graph_service_1.SPINAL_RELATION_PTR_LST_TYPE),
-                            spinal_env_viewer_graph_service_1.SpinalGraphService.addChild(bmsElement.id, value.nodeId, constants_1.OBJECT_TO_BACNET_ITEM_RELATION, spinal_env_viewer_graph_service_1.SPINAL_RELATION_PTR_LST_TYPE)
-                        ]);
+                        try {
+                            return Promise.all([
+                                spinal_env_viewer_graph_service_1.SpinalGraphService.addChild(value.parentId, bmsElement.id, spinal_model_bmsnetwork_1.SpinalBmsEndpoint.relationName, spinal_env_viewer_graph_service_1.SPINAL_RELATION_PTR_LST_TYPE),
+                                spinal_env_viewer_graph_service_1.SpinalGraphService.addChild(bmsElement.id, value.nodeId, constants_1.OBJECT_TO_BACNET_ITEM_RELATION, spinal_env_viewer_graph_service_1.SPINAL_RELATION_PTR_LST_TYPE)
+                            ]);
+                        }
+                        catch (error) {
+                        }
                     }
                     return;
                 });
                 try {
                     yield Promise.all(promises2);
-                }
-                catch (error) {
-                }
-                try {
                     yield spinal_env_viewer_graph_service_1.SpinalGraphService.addChild(bmsDeviceId, profilId, constants_1.AUTOMATES_TO_PROFILE_RELATION, spinal_env_viewer_graph_service_1.SPINAL_RELATION_PTR_LST_TYPE);
                     yield spinal_env_viewer_graph_service_1.SpinalGraphService.addChild(bimDeviceId, bmsDeviceId, spinal_model_bmsnetwork_1.SpinalBmsDevice.relationName, spinal_env_viewer_graph_service_1.SPINAL_RELATION_PTR_LST_TYPE);
                     return;
                 }
-                catch (error) { }
+                catch (error) {
+                }
             }
             else {
                 throw new Error(`${bimDeviceId} has no profil linked`);
@@ -155,10 +156,10 @@ class LinkBmsDeviceService {
         const bimDeviceMap = new Map();
         return LinkNetworkTreeService_1.LinkNetworkTreeService.getDeviceAndProfilData(automateId).then((result) => {
             const promises = result.valids.map(({ automateItem, profileItem }) => __awaiter(this, void 0, void 0, function* () {
-                const attrs = yield DeviceProfileUtilities_1.default.getItemIO(profileItem.id);
+                const attrs = yield DeviceProfileUtilities_1.default.getMeasures(profileItem.id);
                 for (const attr of attrs) {
                     attr.parentId = automateItem.id;
-                    bimDeviceMap.set((parseInt(attr.IDX) + 1), attr);
+                    bimDeviceMap.set(`${attr.typeId}_${(parseInt(attr.IDX) + 1)}`, attr);
                 }
                 return;
             }));

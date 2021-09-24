@@ -10,6 +10,9 @@ export default class DeviceProfileUtilities {
     static ANALOG_VALUE_RELATION: string;
     static MULTISTATE_VALUE_RELATION: string;
     static BINARY_VALUE_RELATION: string;
+    static ITEMS_TO_SUPERVISION: string;
+    static SUPERVISION_TO_MEASURES: string;
+    static MEASURE_TO_ITEMS: string;
     static BACNET_VALUES_TYPE: string[];
     static profilsMaps: Map<string, Map<number, any>>;
     static getDevicesContexts(): Array<{
@@ -48,6 +51,7 @@ export default class DeviceProfileUtilities {
         id: string;
     }>>;
     static getItemIO(nodeId: string): Promise<any>;
+    static getMeasures(nodeId: string): Promise<any>;
     static getProfilBacnetValues(profilId: string, profilContextId?: string): Promise<any>;
     static getBacnetValuesMap(profilId: string): Promise<Map<any, any>>;
     static _getBacnetObjectType(type: any): any;

@@ -105,6 +105,33 @@ class DeviceProfileUtilities {
             });
         });
     }
+    static getMeasures(nodeId) {
+        var _a, _b, _c, _d;
+        return __awaiter(this, void 0, void 0, function* () {
+            const supervisions = yield spinal_env_viewer_graph_service_1.SpinalGraphService.getChildren(nodeId, [this.ITEMS_TO_SUPERVISION]);
+            const measures = yield spinal_env_viewer_graph_service_1.SpinalGraphService.getChildren((_b = (_a = supervisions[0]) === null || _a === void 0 ? void 0 : _a.id) === null || _b === void 0 ? void 0 : _b.get(), [this.SUPERVISION_TO_MEASURES]);
+            const children = yield spinal_env_viewer_graph_service_1.SpinalGraphService.getChildren((_d = (_c = measures[0]) === null || _c === void 0 ? void 0 : _c.id) === null || _d === void 0 ? void 0 : _d.get(), [this.MEASURE_TO_ITEMS]);
+            const promises = children.map((child) => __awaiter(this, void 0, void 0, function* () {
+                const realNode = spinal_env_viewer_graph_service_1.SpinalGraphService.getRealNode(child.id.get());
+                const attributes = yield spinal_env_viewer_plugin_documentation_service_1.serviceDocumentation.getAttributesByCategory(realNode, constants_2.ATTRIBUTE_CATEGORY);
+                // console.log("attributes", attributes)
+                const obj = {
+                    nodeId: child.id.get(),
+                    typeId: this._getBacnetObjectType(child.type.get())
+                };
+                for (const el of attributes) {
+                    obj[el.label.get()] = el.value.get();
+                }
+                // attributes.forEach(el => {
+                // })
+                return obj;
+            }));
+            return Promise.all(promises).then((res) => {
+                return res;
+                // return result.flat();
+            });
+        });
+    }
     static getProfilBacnetValues(profilId, profilContextId) {
         return __awaiter(this, void 0, void 0, function* () {
             if (typeof profilContextId === "undefined" || profilContextId.trim().length === 0) {
@@ -165,6 +192,9 @@ DeviceProfileUtilities.PROFIL_TO_BACNET_RELATION = "hasBacnetValues";
 DeviceProfileUtilities.ANALOG_VALUE_RELATION = "hasAnalogValues";
 DeviceProfileUtilities.MULTISTATE_VALUE_RELATION = "hasMultiStateValues";
 DeviceProfileUtilities.BINARY_VALUE_RELATION = "hasBinaryValues";
+DeviceProfileUtilities.ITEMS_TO_SUPERVISION = "hasSupervisionNode";
+DeviceProfileUtilities.SUPERVISION_TO_MEASURES = "hasMeasures";
+DeviceProfileUtilities.MEASURE_TO_ITEMS = "hasMeasure";
 DeviceProfileUtilities.BACNET_VALUES_TYPE = ["networkValue", "binaryValue", "analogValue", "multiStateValue"];
 DeviceProfileUtilities.profilsMaps = new Map();
 //# sourceMappingURL=DeviceProfileUtilities.js.map

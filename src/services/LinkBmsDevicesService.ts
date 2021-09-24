@@ -25,25 +25,31 @@ export default class LinkBmsDeviceService {
             const bmsElement = bmsDevicesMap.get(key);
             const value = bimDevicesMap.get(key);
             if (bmsElement && value) {
-               return Promise.all([
-                  SpinalGraphService.addChild(value.parentId, bmsElement.id, SpinalBmsEndpoint.relationName, SPINAL_RELATION_PTR_LST_TYPE),
-                  SpinalGraphService.addChild(bmsElement.id, value.nodeId, OBJECT_TO_BACNET_ITEM_RELATION, SPINAL_RELATION_PTR_LST_TYPE)
-               ])
+               try {
+                  return Promise.all([
+                     SpinalGraphService.addChild(value.parentId, bmsElement.id, SpinalBmsEndpoint.relationName, SPINAL_RELATION_PTR_LST_TYPE),
+                     SpinalGraphService.addChild(bmsElement.id, value.nodeId, OBJECT_TO_BACNET_ITEM_RELATION, SPINAL_RELATION_PTR_LST_TYPE)
+                  ])
+               } catch (error) {
+
+               }
+
             }
             return;
          })
 
          try {
             await Promise.all(promises2);
+            await SpinalGraphService.addChild(bmsDeviceId, profilId, AUTOMATES_TO_PROFILE_RELATION, SPINAL_RELATION_PTR_LST_TYPE);
+            await SpinalGraphService.addChild(bimDeviceId, bmsDeviceId, SpinalBmsDevice.relationName, SPINAL_RELATION_PTR_LST_TYPE);
+            return;
          } catch (error) {
 
          }
 
-         try {
-            await SpinalGraphService.addChild(bmsDeviceId, profilId, AUTOMATES_TO_PROFILE_RELATION, SPINAL_RELATION_PTR_LST_TYPE);
-            await SpinalGraphService.addChild(bimDeviceId, bmsDeviceId, SpinalBmsDevice.relationName, SPINAL_RELATION_PTR_LST_TYPE);
-            return;
-         } catch (error) { }
+
+
+
 
 
       } else {
@@ -168,10 +174,10 @@ export default class LinkBmsDeviceService {
       return LinkNetworkTreeService.getDeviceAndProfilData(automateId).then((result) => {
 
          const promises = result.valids.map(async ({ automateItem, profileItem }) => {
-            const attrs = await DeviceProfileUtilities.getItemIO(profileItem.id);
+            const attrs = await DeviceProfileUtilities.getMeasures(profileItem.id);
             for (const attr of attrs) {
                (<any>attr).parentId = automateItem.id;
-               bimDeviceMap.set((parseInt((<any>attr).IDX) + 1), attr);
+               bimDeviceMap.set(`${attr.typeId}_${(parseInt((<any>attr).IDX) + 1)}`, attr);
             }
             return;
          })
