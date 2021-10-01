@@ -195,7 +195,7 @@ export default class DeviceProfileUtilities {
 
       return bacnetValues.map(el => {
          const info = el.get();
-         info.typeId = this._getBacnetObjectType(el.type);
+         info.typeId = this._getBacnetObjectType(el.type.get());
          return info;
       });
    }
