@@ -218,9 +218,9 @@ export default abstract class DeviceProfileUtilities {
 
    public static async getBacnetValuesMap(profilId: string): Promise<Map<string, INodeRefObj>> {
 
-      // if (this.profilsMaps.get(profilId)) {
-      //    return this.profilsMaps.get(profilId);
-      // }
+      if (this.profilsMaps.get(profilId)) {
+         return this.profilsMaps.get(profilId);
+      }
 
       const bimDeviceMap: Map<string, INodeRefObj> = new Map();
 

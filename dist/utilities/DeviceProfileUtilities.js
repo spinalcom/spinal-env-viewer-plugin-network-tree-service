@@ -174,9 +174,9 @@ class DeviceProfileUtilities {
     }
     static getBacnetValuesMap(profilId) {
         return __awaiter(this, void 0, void 0, function* () {
-            // if (this.profilsMaps.get(profilId)) {
-            //    return this.profilsMaps.get(profilId);
-            // }
+            if (this.profilsMaps.get(profilId)) {
+                return this.profilsMaps.get(profilId);
+            }
             const bimDeviceMap = new Map();
             const attrs = yield this.getProfilBacnetValues(profilId);
             for (const attr of attrs) {
