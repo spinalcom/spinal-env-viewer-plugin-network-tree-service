@@ -1,19 +1,43 @@
+/*
+ * Copyright 2021 SpinalCom - www.spinalcom.com
+ * 
+ * This file is part of SpinalCore.
+ * 
+ * Please read all of the following terms and conditions
+ * of the Free Software license Agreement ("Agreement")
+ * carefully.
+ * 
+ * This Agreement is a legally binding contract between
+ * the Licensee (as defined below) and SpinalCom that
+ * sets forth the terms and conditions that govern your
+ * use of the Program. By installing and/or using the
+ * Program, you agree to abide by all the terms and
+ * conditions stated or referenced herein.
+ * 
+ * If you do not agree to abide by these terms and
+ * conditions, do not demonstrate your acceptance and do
+ * not install or use the Program.
+ * You should have received a copy of the license along
+ * with this file. If not, see
+ * <http://resources.spinalcom.com/licenses.pdf>.
+ */
+
 import "spinal-env-viewer-plugin-forge";
 import { SpinalContext, SpinalGraphService, SpinalNode, SPINAL_RELATION_PTR_LST_TYPE } from 'spinal-env-viewer-graph-service';
 import { NETWORK_RELATION, CONTEXT_TYPE, NETWORK_TYPE, NETWORK_BIMOJECT_RELATION, AUTOMATES_TO_PROFILE_RELATION, OBJECT_TO_BACNET_ITEM_RELATION } from '../data/constants';
-import { IDataFormated, INodeInfoOBJ } from "../data/Interfaces";
+import { IResultClassed } from "../data/IResult";
+import { INodeRefObj } from "../data/INodeRefObj";
 import { BIM_OBJECT_TYPE } from "spinal-env-viewer-plugin-forge/dist/Constants";
-
+import * as _ from "lodash";
 import { Model } from "spinal-core-connectorjs_type";
-
-import Utilities from "../utilities/utilities";
+import { IAggregateSelection } from "../data/IAggregateSelection";
 
 
 // const spinalForgeViewer = new SpinalForgeViewer();
 const g_win: any = typeof window === "undefined" ? global : window;
 const bimObjectService = g_win.spinal.BimObjectService;
 
-export default class NetworkTreeService {
+export default abstract class NetworkTreeService {
 
    public static createNetworkContext(name: string): Promise<SpinalContext<any>> {
       return SpinalGraphService.addContext(name, CONTEXT_TYPE);
@@ -31,7 +55,7 @@ export default class NetworkTreeService {
 
    }
 
-   public static addBimObject(contextId: string, parentId: string, bimObjectList: Array<{ model: any, selection: Array<number> }>): Promise<Array<SpinalNode<any>>> {
+   public static addBimObject(contextId: string, parentId: string, bimObjectList: IAggregateSelection[]): Promise<SpinalNode<any>[]> {
 
       const promises = [];
 
@@ -57,17 +81,17 @@ export default class NetworkTreeService {
       return Promise.all(promises);
    }
 
-   public static getBimObjectsLinked(nodeId: string): Promise<Array<spinal.Model>> {
+   public static getBimObjectsLinked(nodeId: string): Promise<spinal.Model[]> {
       return SpinalGraphService.getChildren(nodeId, [NETWORK_BIMOJECT_RELATION]);
    }
 
-   public static getNetworkTreeBimObjects(contextId: string): Promise<Array<SpinalNode<any>>> {
+   public static getNetworkTreeBimObjects(contextId: string): Promise<SpinalNode<any>[]> {
       return SpinalGraphService.findNodes(contextId, [NETWORK_RELATION, NETWORK_BIMOJECT_RELATION], (node) => {
          return node.getType().get() === BIM_OBJECT_TYPE;
       })
    }
 
-   public static getNetworkGroups(bimObjectId: string): Promise<Array<INodeInfoOBJ>> {
+   public static getNetworkGroups(bimObjectId: string): Promise<Array<INodeRefObj>> {
       let realNode = SpinalGraphService.getRealNode(bimObjectId);
       if (!realNode) return Promise.resolve([]);
 
@@ -81,7 +105,7 @@ export default class NetworkTreeService {
       })
    }
 
-   public static getNetworkBimObjectParents(bimObjectId: string): Promise<Array<INodeInfoOBJ>> {
+   public static getNetworkBimObjectParents(bimObjectId: string): Promise<Array<INodeRefObj>> {
       let realNode = SpinalGraphService.getRealNode(bimObjectId);
       if (!realNode) return Promise.resolve([]);
 
@@ -97,7 +121,7 @@ export default class NetworkTreeService {
          });
 
          return Promise.all(promises).then(parents => {
-            return Utilities._flatten(parents).filter(el => typeof el !== "undefined");
+            return _.flattenDeep(parents).filter(el => typeof el !== "undefined");
          })
       });
 

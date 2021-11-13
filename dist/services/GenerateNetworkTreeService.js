@@ -1,4 +1,27 @@
 "use strict";
+/*
+ * Copyright 2021 SpinalCom - www.spinalcom.com
+ *
+ * This file is part of SpinalCore.
+ *
+ * Please read all of the following terms and conditions
+ * of the Free Software license Agreement ("Agreement")
+ * carefully.
+ *
+ * This Agreement is a legally binding contract between
+ * the Licensee (as defined below) and SpinalCom that
+ * sets forth the terms and conditions that govern your
+ * use of the Program. By installing and/or using the
+ * Program, you agree to abide by all the terms and
+ * conditions stated or referenced herein.
+ *
+ * If you do not agree to abide by these terms and
+ * conditions, do not demonstrate your acceptance and do
+ * not install or use the Program.
+ * You should have received a copy of the license along
+ * with this file. If not, see
+ * <http://resources.spinalcom.com/licenses.pdf>.
+ */
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -9,16 +32,14 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.GenerateNetworkTreeService = void 0;
 require("spinal-env-viewer-plugin-forge");
+const _ = require("lodash");
 const spinal_env_viewer_graph_service_1 = require("spinal-env-viewer-graph-service");
 const spinal_env_viewer_plugin_documentation_service_1 = require("spinal-env-viewer-plugin-documentation-service");
-const constants_1 = require("../data/constants");
-const AttributesUtilities_1 = require("../utilities/AttributesUtilities");
 // import { NetworkTreeService } from "./NetworkTreeService";
 const spinal_core_connectorjs_type_1 = require("spinal-core-connectorjs_type");
-const _ = require("lodash");
-const utilities_1 = require("../utilities/utilities");
+const constants_1 = require("../data/constants");
+const AttributesUtilities_1 = require("../utilities/AttributesUtilities");
 // const spinalForgeViewer = new SpinalForgeViewer();
 const g_win = typeof window === "undefined" ? global : window;
 const bimObjectService = g_win.spinal.BimObjectService;
@@ -30,13 +51,8 @@ class GenerateNetworkTreeService {
             const promises = items.map(({ model, selection }) => {
                 return this._getItemPropertiesFormatted(model, selection, attributeName, namingConventionConfig);
             });
-            // const data = await bimObjectManagerService.getBimObjectProperties(items);
-            // for (const item of data) {
-            //    promises.push(this._getItemPropertiesFormatted(item.model, item.properties, attributeName, namingConventionConfig));
-            // }
             return Promise.all(promises).then((result) => {
-                // console.log("result", result);
-                const resultFlatted = utilities_1.default._flatten(result);
+                const resultFlatted = _.flattenDeep(result);
                 const res = {
                     validItems: [],
                     invalidItems: []
@@ -53,9 +69,9 @@ class GenerateNetworkTreeService {
             });
         });
     }
-    static createTree(automates, equipments, config) {
+    static createTree(automates, equipments, attrConfig) {
         return __awaiter(this, void 0, void 0, function* () {
-            return this._getTreeArray(automates, equipments, config).then(({ tree, valids, invalids }) => __awaiter(this, void 0, void 0, function* () {
+            return this._getTreeArray(automates, equipments, attrConfig).then(({ tree, valids, invalids }) => __awaiter(this, void 0, void 0, function* () {
                 const treeL = yield this._TransformArrayToTree(tree);
                 return {
                     tree: treeL,
@@ -70,7 +86,9 @@ class GenerateNetworkTreeService {
             tree = tree.filter(el => el.children.length > 0);
         }
         const promises = tree.map(el => this._createNodes(contextId, el, nodeId));
-        return Promise.all(promises);
+        return Promise.all(promises).then((result) => {
+            return _.flattenDeep(result);
+        });
     }
     static classifyDbIdsByModel(items) {
         const res = [];
@@ -83,7 +101,7 @@ class GenerateNetworkTreeService {
         }
         return res;
     }
-    static _createNodes(contextId, node, parentId) {
+    static _createNodes(contextId, node, parentNodeId) {
         return __awaiter(this, void 0, void 0, function* () {
             let id;
             let relationName;
@@ -102,11 +120,14 @@ class GenerateNetworkTreeService {
             }
             return this._addSpinalAttribute(id, node.namingConvention).then(() => __awaiter(this, void 0, void 0, function* () {
                 try {
-                    yield spinal_env_viewer_graph_service_1.SpinalGraphService.addChildInContext(parentId, id, contextId, relationName, spinal_env_viewer_graph_service_1.SPINAL_RELATION_PTR_LST_TYPE);
+                    yield spinal_env_viewer_graph_service_1.SpinalGraphService.addChildInContext(parentNodeId, id, contextId, relationName, spinal_env_viewer_graph_service_1.SPINAL_RELATION_PTR_LST_TYPE);
                 }
                 catch (error) { }
                 if (node.children && node.children.length > 0) {
-                    return Promise.all(node.children.map(el => this._createNodes(contextId, el, id)));
+                    const promises = node.children.map(el => this._createNodes(contextId, el, id));
+                    return Promise.all(promises).then((result) => {
+                        return _.flattenDeep(result);
+                    });
                 }
                 return spinal_env_viewer_graph_service_1.SpinalGraphService.getRealNode(id);
             }));
@@ -115,14 +136,8 @@ class GenerateNetworkTreeService {
     ////////////////////////////////////////////////////////////////////////////////
     ////                                PRIVATES                                  //
     ////////////////////////////////////////////////////////////////////////////////
-    static _getItemPropertiesFormatted(model, itemList, attributeName, namingConventionConfig) {
-        const promises = itemList.map((dbid) => __awaiter(this, void 0, void 0, function* () {
-            // el.model = model;
-            // el.property = this._getAttributeByName(el.properties, attributeName);
-            // if (namingConventionConfig) {
-            //    el.namingConvention = await this._getNamingConvention(el, namingConventionConfig);
-            // }
-            // return el;
+    static _getItemPropertiesFormatted(model, dbIds, attributeName, namingConventionConfig) {
+        const promises = dbIds.map((dbid) => __awaiter(this, void 0, void 0, function* () {
             const obj = { model, dbId: dbid };
             obj["property"] = yield AttributesUtilities_1.AttributesUtilities.findAttribute(model, dbid, attributeName);
             if (namingConventionConfig) {
@@ -133,32 +148,24 @@ class GenerateNetworkTreeService {
         }));
         return Promise.all(promises);
     }
-    static _getBimObjectName({ dbId, model }) {
-        return new Promise((resolve, reject) => {
-            model.getBulkProperties([dbId], {
-                propFilter: ['name']
-            }, (el) => {
-                resolve(el);
-            });
-        });
-    }
-    static _getTreeArray(items, equipments, config) {
+    static _getTreeArray(items, equipments, attrConfig) {
         return __awaiter(this, void 0, void 0, function* () {
             const tree = yield this._formatAutomateAttribute(items);
             const invalids = [];
             const valids = [];
             const subList = _.chunk(equipments, 100);
             const promises = subList.map(el => {
-                return this._formatEquipmentAttribute(tree, el, config);
+                return this._formatEquipmentAttribute(tree, el, attrConfig);
             });
-            return Promise.all(_.flattenDeep(promises)).then((result) => {
-                for (const ite of result) {
-                    if (ite.parentId !== "noParent") {
-                        tree.push(ite);
-                        valids.push(ite);
+            return Promise.all(promises).then((result) => {
+                const resultFlatted = _.flattenDeep(result);
+                for (const item of resultFlatted) {
+                    if (item.parentId !== "noParent") {
+                        tree.push(item);
+                        valids.push(item);
                     }
                     else {
-                        invalids.push(ite);
+                        invalids.push(item);
                     }
                 }
                 return {
@@ -170,7 +177,7 @@ class GenerateNetworkTreeService {
         });
     }
     static _formatAutomateAttribute(items) {
-        const promises = items.map(el => {
+        const promises = items.map((el) => {
             return this._getBimObjectName(el).then((result) => {
                 el.id = result[0].dbId;
                 el.name = result[0].name;
@@ -182,19 +189,14 @@ class GenerateNetworkTreeService {
         });
         return Promise.all(promises);
     }
-    static _formatEquipmentAttribute(tree, equipments, config) {
+    static _formatEquipmentAttribute(tree, equipments, attrConfig) {
         const promises = [];
         for (const element of equipments) {
-            promises.push(this._formatItem(tree, element, config));
-            // const attributes = element.property.displayValue.split(separator);
-            // const len = attributes.length;
-            // const attr = element.property.displayValue.split(separator, indice).join(separator)
-            // const attr = element.property.displayValue;
-            // const parent = this.getElementAut(tree, element, config);
+            promises.push(this._formatItem(tree, element, attrConfig));
         }
-        return promises;
+        return Promise.all(promises);
     }
-    static _formatItem(tree, element, config) {
+    static _formatItem(tree, element, attrConfig) {
         return __awaiter(this, void 0, void 0, function* () {
             const obj = {
                 model: element.model,
@@ -205,7 +207,7 @@ class GenerateNetworkTreeService {
                 children: [],
                 parentId: "noParent"
             };
-            let parent = this.getElementAut(tree, element, config);
+            let parent = this.getElementAut(tree, element, attrConfig);
             if (parent && parent.dbId !== obj.dbId) {
                 // console.log("parent found", parent.name);
                 obj.parentId = parent.id;
@@ -215,11 +217,11 @@ class GenerateNetworkTreeService {
     }
     static _createBimObjectNode({ dbId, model, color, isAutomate }) {
         return __awaiter(this, void 0, void 0, function* () {
-            const elements = yield this._getBimObjectName({ dbId, model });
-            const element = elements[0];
+            const element = yield this._getBimObjectName({ dbId, model });
+            // const element = elements[0];
             return bimObjectService.createBIMObject(element.dbId, element.name, model).then((node) => {
-                const nodeId = node.id ? node.id.get() : node.info.id.get();
-                const realNode = spinal_env_viewer_graph_service_1.SpinalGraphService.getRealNode(nodeId);
+                // const nodeId = node instanceof SpinalNode ? node.getId().get() : node.id.get();
+                const realNode = node instanceof spinal_env_viewer_graph_service_1.SpinalNode ? node : spinal_env_viewer_graph_service_1.SpinalGraphService.getRealNode(node.id.get());
                 if (realNode.info.color) {
                     realNode.info.color.set(color);
                 }
@@ -232,7 +234,16 @@ class GenerateNetworkTreeService {
                 else {
                     realNode.info.add_attr({ isAutomate: isAutomate });
                 }
-                return nodeId;
+                return realNode.getId().get();
+            });
+        });
+    }
+    static _getBimObjectName({ dbId, model }) {
+        return new Promise((resolve) => {
+            model.getBulkProperties([dbId], {
+                propFilter: ['name']
+            }, (el) => {
+                resolve(el[0]);
             });
         });
     }
@@ -261,10 +272,10 @@ class GenerateNetworkTreeService {
         const randomColor = Math.floor(Math.random() * 16777215).toString(16);
         return '#' + randomColor;
     }
-    static getElementAut(tree, item, config) {
+    static getElementAut(tree, item, attrConfig) {
         const elementAttribute = item.property.displayValue;
-        if (config.isRegex) {
-            const flags = config.flags.join('');
+        if (attrConfig.isRegex) {
+            const flags = attrConfig.flags.join('');
             return eval(`tree.find(element => {
             const select = config.select.replace('${constants_1.OBJECT_ATTR}', elementAttribute).replace('${constants_1.PLC_ATTR}', element.property);
             const text = config.text.replace('${constants_1.OBJECT_ATTR}', elementAttribute).replace('${constants_1.PLC_ATTR}', element.property);
@@ -276,32 +287,18 @@ class GenerateNetworkTreeService {
         }
         else {
             return eval(`tree.find(element => {
-               return (${config.callback})(element.property, elementAttribute); 
+               return (${attrConfig.callback})(element.property, elementAttribute); 
             })`);
         }
     }
     static _getNamingConvention(property, namingConventionConfig) {
         return __awaiter(this, void 0, void 0, function* () {
-            // const property = await this._getpropertyValue(node, namingConventionConfig.attributeName);
             if (property && ((property.displayValue + '').length > 0)) {
                 const value = property.displayValue;
                 return namingConventionConfig.useAttrValue ? value : eval(`(${namingConventionConfig.personalized.callback})('${value}')`);
             }
         });
     }
-    // private static async _getpropertyValue(node, attributeName) {
-    //    let properties = node.properties;
-    //    if (typeof properties === "undefined") {
-    //       const res = await bimObjectManagerService.getBimObjectProperties([{ model: node.model, selection: [node.dbId] }]);
-    //       properties = res[0].properties;
-    //    }
-    //    return this._getAttributeByName(properties, attributeName);
-    // }
-    // private static _getAttributeByName(properties, propertyName) {
-    //    return properties.find((obj) => {
-    //       return (obj.displayName === propertyName || obj.attributeName === propertyName) && (obj.displayValue && ((obj.displayValue + '').length > 0))
-    //    });
-    // }
     static _addSpinalAttribute(id, namingConvention) {
         if (!namingConvention || namingConvention.length === 0)
             return;

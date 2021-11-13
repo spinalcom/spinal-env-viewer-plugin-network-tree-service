@@ -1,4 +1,27 @@
 "use strict";
+/*
+ * Copyright 2021 SpinalCom - www.spinalcom.com
+ *
+ * This file is part of SpinalCore.
+ *
+ * Please read all of the following terms and conditions
+ * of the Free Software license Agreement ("Agreement")
+ * carefully.
+ *
+ * This Agreement is a legally binding contract between
+ * the Licensee (as defined below) and SpinalCom that
+ * sets forth the terms and conditions that govern your
+ * use of the Program. By installing and/or using the
+ * Program, you agree to abide by all the terms and
+ * conditions stated or referenced herein.
+ *
+ * If you do not agree to abide by these terms and
+ * conditions, do not demonstrate your acceptance and do
+ * not install or use the Program.
+ * You should have received a copy of the license along
+ * with this file. If not, see
+ * <http://resources.spinalcom.com/licenses.pdf>.
+ */
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -9,13 +32,12 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.DeviceProfileUtilities = void 0;
 const spinal_env_viewer_graph_service_1 = require("spinal-env-viewer-graph-service");
 const constants_1 = require("spinal-env-viewer-plugin-device_profile/constants");
-const utilities_1 = require("../utilities/utilities");
 const spinal_env_viewer_plugin_documentation_service_1 = require("spinal-env-viewer-plugin-documentation-service");
 const constants_2 = require("../data/constants");
 const bacnet = require("bacstack");
+const _ = require("lodash");
 class DeviceProfileUtilities {
     static getDevicesContexts() {
         const result = spinal_env_viewer_graph_service_1.SpinalGraphService.getContextWithType(this.DEVICE_PROFILE_CONTEXT);
@@ -39,7 +61,7 @@ class DeviceProfileUtilities {
         return spinal_env_viewer_graph_service_1.SpinalGraphService.getChildren(deviceId, [this.ITEM_LIST_RELATION]).then((itemList) => {
             const promises = itemList.map(el => spinal_env_viewer_graph_service_1.SpinalGraphService.getChildren(el.id.get(), [this.ITEM_LIST_TO_ITEMS_RELATION]));
             return Promise.all(promises).then((items) => {
-                return utilities_1.default._flatten(items).map(el => el.get());
+                return _.flattenDeep(items).map(el => el.get());
             });
         }).catch((err) => {
             return [];
@@ -49,7 +71,7 @@ class DeviceProfileUtilities {
         return spinal_env_viewer_graph_service_1.SpinalGraphService.getChildren(itemId, [this.INPUTS_RELATION]).then((children) => {
             const promises = children.map(el => spinal_env_viewer_graph_service_1.SpinalGraphService.getChildren(el.id.get(), [this.INPUT_RELATION]));
             return Promise.all(promises).then((result) => {
-                const flattedResult = utilities_1.default._flatten(result);
+                const flattedResult = _.flattenDeep(result);
                 return flattedResult.map(el => el.get());
             });
         });
@@ -58,7 +80,7 @@ class DeviceProfileUtilities {
         return spinal_env_viewer_graph_service_1.SpinalGraphService.getChildren(itemId, [this.OUTPUTS_RELATION]).then((children) => {
             const promises = children.map(el => spinal_env_viewer_graph_service_1.SpinalGraphService.getChildren(el.id.get(), [this.OUTPUT_RELATION]));
             return Promise.all(promises).then((result) => {
-                const flattedResult = utilities_1.default._flatten(result);
+                const flattedResult = _.flattenDeep(result);
                 return flattedResult.map(el => el.get());
             });
         });
@@ -86,7 +108,7 @@ class DeviceProfileUtilities {
         const outputsPromises = this.getItemOutputs(nodeId);
         return Promise.all([inputsPromises, outputsPromises]).then((result) => {
             // console.log("[input, output]", result);
-            const children = utilities_1.default._flatten(result);
+            const children = _.flattenDeep(result);
             const promises = children.map((child) => __awaiter(this, void 0, void 0, function* () {
                 const realNode = spinal_env_viewer_graph_service_1.SpinalGraphService.getRealNode(child.id);
                 const attributes = yield spinal_env_viewer_plugin_documentation_service_1.serviceDocumentation.getAttributesByCategory(realNode, constants_2.ATTRIBUTE_CATEGORY);
@@ -99,10 +121,7 @@ class DeviceProfileUtilities {
                 });
                 return obj;
             }));
-            return Promise.all(promises).then((res) => {
-                return res;
-                // return result.flat();
-            });
+            return Promise.all(promises);
         });
     }
     static getMeasures(nodeId) {
@@ -135,14 +154,7 @@ class DeviceProfileUtilities {
     static getProfilBacnetValues(profilId, profilContextId) {
         return __awaiter(this, void 0, void 0, function* () {
             if (typeof profilContextId === "undefined" || profilContextId.trim().length === 0) {
-                let realNode = spinal_env_viewer_graph_service_1.SpinalGraphService.getRealNode(profilId);
-                if (!realNode)
-                    return;
-                const contextIds = realNode.getContextIds();
-                profilContextId = contextIds.find(id => {
-                    let info = spinal_env_viewer_graph_service_1.SpinalGraphService.getInfo(id);
-                    return info && info.type.get() === this.DEVICE_PROFILE_CONTEXT;
-                });
+                profilContextId = this.getProfilContextId(profilId);
             }
             if (!profilContextId)
                 return;
@@ -162,9 +174,9 @@ class DeviceProfileUtilities {
     }
     static getBacnetValuesMap(profilId) {
         return __awaiter(this, void 0, void 0, function* () {
-            if (this.profilsMaps.get(profilId)) {
-                return this.profilsMaps.get(profilId);
-            }
+            // if (this.profilsMaps.get(profilId)) {
+            //    return this.profilsMaps.get(profilId);
+            // }
             const bimDeviceMap = new Map();
             const attrs = yield this.getProfilBacnetValues(profilId);
             for (const attr of attrs) {
@@ -177,6 +189,16 @@ class DeviceProfileUtilities {
     static _getBacnetObjectType(type) {
         const objectName = ("object_" + type.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`)).toUpperCase();
         return bacnet.enum.ObjectTypes[objectName];
+    }
+    static getProfilContextId(profilId) {
+        let realNode = spinal_env_viewer_graph_service_1.SpinalGraphService.getRealNode(profilId);
+        if (!realNode)
+            return;
+        const contextIds = realNode.getContextIds();
+        return contextIds.find(id => {
+            let info = spinal_env_viewer_graph_service_1.SpinalGraphService.getInfo(id);
+            return info && info.type.get() === this.DEVICE_PROFILE_CONTEXT;
+        });
     }
 }
 exports.default = DeviceProfileUtilities;

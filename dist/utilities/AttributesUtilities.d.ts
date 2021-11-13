@@ -1,12 +1,7 @@
-export default class AttributesUtilities {
-    constructor();
-    static getRevitAttributes(items: {
-        model: any;
-        selection: Number[];
-    } | Array<{
-        model: any;
-        selection: Number[];
-    }>): Promise<Array<{
+import { IAggregateSelection } from "../data/IAggregateSelection";
+import { IForgeProperty } from "../data/IForgeProperty";
+export default abstract class AttributesUtilities {
+    static getRevitAttributes(items: IAggregateSelection | IAggregateSelection[]): Promise<Array<{
         model: any;
         properties: {
             [key: string]: any;
@@ -19,31 +14,9 @@ export default class AttributesUtilities {
             value: any;
         }>;
     }>>;
-    static findRevitAttribute(model: any, dbid: number, attributeName: string): Promise<{
-        categoryName: string;
-        displayName: string;
-        attributeName: string;
-        displayValue: string;
-    }>;
-    static findSpinalAttribute(model: any, dbid: number, attributeName: string): Promise<{
-        categoryName: string;
-        categoryId: string;
-        displayName: string;
-        attributeName: string;
-        displayValue: string;
-    }>;
-    static findSpinalAttributeById(nodeId: string, attributeName: string): Promise<{
-        categoryName: string;
-        categoryId: string;
-        displayName: string;
-        attributeName: string;
-        displayValue: string;
-    }>;
-    static findAttribute(model: any, dbid: number, attributeName: string): Promise<{
-        categoryName: string;
-        displayName: string;
-        attributeName: string;
-        displayValue: string;
-    }>;
+    static findRevitAttribute(model: any, dbid: number, attributeName: string): Promise<IForgeProperty>;
+    static findSpinalAttribute(model: any, dbid: number, attributeName: string): Promise<IForgeProperty>;
+    static findSpinalAttributeById(nodeId: string, attributeName: string): Promise<IForgeProperty>;
+    static findAttribute(model: any, dbid: number, attributeName: string): Promise<IForgeProperty>;
 }
 export { AttributesUtilities };

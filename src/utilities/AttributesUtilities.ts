@@ -1,18 +1,47 @@
+/*
+ * Copyright 2021 SpinalCom - www.spinalcom.com
+ * 
+ * This file is part of SpinalCore.
+ * 
+ * Please read all of the following terms and conditions
+ * of the Free Software license Agreement ("Agreement")
+ * carefully.
+ * 
+ * This Agreement is a legally binding contract between
+ * the Licensee (as defined below) and SpinalCom that
+ * sets forth the terms and conditions that govern your
+ * use of the Program. By installing and/or using the
+ * Program, you agree to abide by all the terms and
+ * conditions stated or referenced herein.
+ * 
+ * If you do not agree to abide by these terms and
+ * conditions, do not demonstrate your acceptance and do
+ * not install or use the Program.
+ * You should have received a copy of the license along
+ * with this file. If not, see
+ * <http://resources.spinalcom.com/licenses.pdf>.
+ */
+
+
+
 import { bimObjectManagerService } from "spinal-env-viewer-bim-manager-service";
 import { serviceDocumentation } from "spinal-env-viewer-plugin-documentation-service";
 import { SpinalGraphService } from "spinal-env-viewer-graph-service";
-import Utilities from "./utilities";
+import { IAggregateSelection } from "../data/IAggregateSelection";
+import { IForgeProperty } from "../data/IForgeProperty";
+
+import * as _ from "lodash";
 
 const g_win: any = typeof window === "undefined" ? global : window;
 const bimObjectService = g_win.spinal.BimObjectService;
 
-export default class AttributesUtilities {
-   constructor() { }
 
-   public static async getRevitAttributes(items: { model: any; selection: Number[] } | Array<{ model: any; selection: Number[] }>): Promise<Array<{ model: any; properties: { [key: string]: any } }>> {
+export default abstract class AttributesUtilities {
+
+   public static async getRevitAttributes(items: IAggregateSelection | IAggregateSelection[]): Promise<Array<{ model: any; properties: { [key: string]: any } }>> {
       const data = await bimObjectManagerService.getBimObjectProperties(items);
 
-      return Utilities._flatten(data.map(el => {
+      return _.flattenDeep(data.map(el => {
          return el.properties;
       }))
    }
@@ -38,7 +67,7 @@ export default class AttributesUtilities {
       return Promise.all(promises);
    }
 
-   public static async findRevitAttribute(model: any, dbid: number, attributeName: string): Promise<{ categoryName: string; displayName: string; attributeName: string; displayValue: string; }> {
+   public static async findRevitAttribute(model: any, dbid: number, attributeName: string): Promise<IForgeProperty> {
       const attributes = await this.getRevitAttributes({ model, selection: [dbid] });
 
       const properties = attributes[0].properties;
@@ -47,7 +76,7 @@ export default class AttributesUtilities {
       })
    }
 
-   public static async findSpinalAttribute(model: any, dbid: number, attributeName: string): Promise<{ categoryName: string; categoryId: string; displayName: string; attributeName: string; displayValue: string; }> {
+   public static async findSpinalAttribute(model: any, dbid: number, attributeName: string): Promise<IForgeProperty> {
       const bimNode = await bimObjectService.getBIMObject(dbid, model);
       if (typeof bimNode === "undefined") return;
 
@@ -69,7 +98,7 @@ export default class AttributesUtilities {
 
    }
 
-   public static async findSpinalAttributeById(nodeId: string, attributeName: string): Promise<{ categoryName: string; categoryId: string; displayName: string; attributeName: string; displayValue: string; }> {
+   public static async findSpinalAttributeById(nodeId: string, attributeName: string): Promise<IForgeProperty> {
       const bimNode = SpinalGraphService.getInfo(nodeId);
       if (typeof bimNode === "undefined") return;
 
@@ -90,7 +119,7 @@ export default class AttributesUtilities {
       }
    }
 
-   public static async findAttribute(model: any, dbid: number, attributeName: string) {
+   public static async findAttribute(model: any, dbid: number, attributeName: string): Promise<IForgeProperty> {
       let attribute = await this.findSpinalAttribute(model, dbid, attributeName);
 
       if (attribute) return attribute;

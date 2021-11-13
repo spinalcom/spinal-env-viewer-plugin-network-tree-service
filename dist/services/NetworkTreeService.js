@@ -1,4 +1,27 @@
 "use strict";
+/*
+ * Copyright 2021 SpinalCom - www.spinalcom.com
+ *
+ * This file is part of SpinalCore.
+ *
+ * Please read all of the following terms and conditions
+ * of the Free Software license Agreement ("Agreement")
+ * carefully.
+ *
+ * This Agreement is a legally binding contract between
+ * the Licensee (as defined below) and SpinalCom that
+ * sets forth the terms and conditions that govern your
+ * use of the Program. By installing and/or using the
+ * Program, you agree to abide by all the terms and
+ * conditions stated or referenced herein.
+ *
+ * If you do not agree to abide by these terms and
+ * conditions, do not demonstrate your acceptance and do
+ * not install or use the Program.
+ * You should have received a copy of the license along
+ * with this file. If not, see
+ * <http://resources.spinalcom.com/licenses.pdf>.
+ */
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -9,13 +32,12 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.NetworkTreeService = void 0;
 require("spinal-env-viewer-plugin-forge");
 const spinal_env_viewer_graph_service_1 = require("spinal-env-viewer-graph-service");
 const constants_1 = require("../data/constants");
 const Constants_1 = require("spinal-env-viewer-plugin-forge/dist/Constants");
+const _ = require("lodash");
 const spinal_core_connectorjs_type_1 = require("spinal-core-connectorjs_type");
-const utilities_1 = require("../utilities/utilities");
 // const spinalForgeViewer = new SpinalForgeViewer();
 const g_win = typeof window === "undefined" ? global : window;
 const bimObjectService = g_win.spinal.BimObjectService;
@@ -79,7 +101,7 @@ class NetworkTreeService {
                 return p;
             }));
             return Promise.all(promises).then(parents => {
-                return utilities_1.default._flatten(parents).filter(el => typeof el !== "undefined");
+                return _.flattenDeep(parents).filter(el => typeof el !== "undefined");
             });
         });
     }

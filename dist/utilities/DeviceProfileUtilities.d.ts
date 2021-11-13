@@ -1,4 +1,5 @@
-export default class DeviceProfileUtilities {
+import { INodeRefObj } from "../data/INodeRefObj";
+export default abstract class DeviceProfileUtilities {
     static DEVICE_PROFILE_CONTEXT: string;
     static ITEM_LIST_RELATION: string;
     static ITEM_LIST_TO_ITEMS_RELATION: string;
@@ -14,46 +15,26 @@ export default class DeviceProfileUtilities {
     static SUPERVISION_TO_MEASURES: string;
     static MEASURE_TO_ITEMS: string;
     static BACNET_VALUES_TYPE: string[];
-    static profilsMaps: Map<string, Map<number, any>>;
-    static getDevicesContexts(): Array<{
-        name: string;
-        type: string;
-        id: string;
-    }>;
-    static getDeviceProfiles(contextId: string): Promise<Array<{
-        name: string;
-        type: string;
-        id: string;
-    }>>;
-    static getDevices(profilId: string): Promise<Array<{
-        name: string;
-        type: string;
-        id: string;
-    }>>;
-    static getItemsList(deviceId: string): Promise<Array<{
-        name: string;
-        type: string;
-        id: string;
-    }>>;
-    static getItemInputs(itemId: string): Promise<Array<{
-        name: string;
-        type: string;
-        id: string;
-    }>>;
-    static getItemOutputs(itemId: string): Promise<Array<{
-        name: string;
-        type: string;
-        id: string;
-    }>>;
-    static getDeviceContextTreeStructure(): Promise<Array<{
-        name: string;
-        type: string;
-        id: string;
-    }>>;
-    static getItemIO(nodeId: string): Promise<any>;
-    static getMeasures(nodeId: string): Promise<any>;
-    static getProfilBacnetValues(profilId: string, profilContextId?: string): Promise<any>;
-    static getBacnetValuesMap(profilId: string): Promise<Map<any, any>>;
-    static _getBacnetObjectType(type: any): any;
+    static profilsMaps: Map<string, Map<string, INodeRefObj>>;
+    static getDevicesContexts(): INodeRefObj[];
+    static getDeviceProfiles(contextId: string): Promise<INodeRefObj[]>;
+    static getDevices(profilId: string): Promise<INodeRefObj[]>;
+    static getItemsList(deviceId: string): Promise<INodeRefObj[]>;
+    static getItemInputs(itemId: string): Promise<INodeRefObj[]>;
+    static getItemOutputs(itemId: string): Promise<INodeRefObj[]>;
+    static getDeviceContextTreeStructure(): Promise<INodeRefObj[]>;
+    static getItemIO(nodeId: string): Promise<{
+        nodeId: string;
+        [key: string]: any;
+    }[]>;
+    static getMeasures(nodeId: string): Promise<{
+        nodeId: string;
+        typeId: string | number;
+        [key: string]: any;
+    }[]>;
+    static getProfilBacnetValues(profilId: string, profilContextId?: string): Promise<INodeRefObj[]>;
+    static getBacnetValuesMap(profilId: string): Promise<Map<string, INodeRefObj>>;
+    static _getBacnetObjectType(type: any): string | number;
+    static getProfilContextId(profilId: string): string;
 }
 export { DeviceProfileUtilities };

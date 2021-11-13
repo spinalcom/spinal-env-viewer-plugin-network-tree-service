@@ -1,11 +1,36 @@
+/*
+ * Copyright 2021 SpinalCom - www.spinalcom.com
+ * 
+ * This file is part of SpinalCore.
+ * 
+ * Please read all of the following terms and conditions
+ * of the Free Software license Agreement ("Agreement")
+ * carefully.
+ * 
+ * This Agreement is a legally binding contract between
+ * the Licensee (as defined below) and SpinalCom that
+ * sets forth the terms and conditions that govern your
+ * use of the Program. By installing and/or using the
+ * Program, you agree to abide by all the terms and
+ * conditions stated or referenced herein.
+ * 
+ * If you do not agree to abide by these terms and
+ * conditions, do not demonstrate your acceptance and do
+ * not install or use the Program.
+ * You should have received a copy of the license along
+ * with this file. If not, see
+ * <http://resources.spinalcom.com/licenses.pdf>.
+ */
+
 import { SpinalGraphService, SpinalNodeRef, SPINAL_RELATION_PTR_LST_TYPE } from "spinal-env-viewer-graph-service";
 import { DEVICE_RELATION_NAME, PART_RELATION_NAME } from "spinal-env-viewer-plugin-device_profile/constants";
-import Utilities from "../utilities/utilities";
 import { serviceDocumentation } from "spinal-env-viewer-plugin-documentation-service";
 import { ATTRIBUTE_CATEGORY } from "../data/constants";
 import * as bacnet from "bacstack";
+import * as _ from "lodash";
+import { INodeRefObj } from "../data/INodeRefObj";
 
-export default class DeviceProfileUtilities {
+export default abstract class DeviceProfileUtilities {
 
    public static DEVICE_PROFILE_CONTEXT: string = "deviceProfileContext";
    public static ITEM_LIST_RELATION: string = "hasItemList";
@@ -30,15 +55,15 @@ export default class DeviceProfileUtilities {
    public static BACNET_VALUES_TYPE: string[] = ["networkValue", "binaryValue", "analogValue", "multiStateValue"];
 
 
-   public static profilsMaps: Map<string, Map<number, any>> = new Map();
+   public static profilsMaps: Map<string, Map<string, INodeRefObj>> = new Map();
 
 
-   public static getDevicesContexts(): Array<{ name: string; type: string; id: string }> {
+   public static getDevicesContexts(): INodeRefObj[] {
       const result = SpinalGraphService.getContextWithType(this.DEVICE_PROFILE_CONTEXT)
       return result.map(el => el.info.get())
    }
 
-   public static getDeviceProfiles(contextId: string): Promise<Array<{ name: string; type: string; id: string }>> {
+   public static getDeviceProfiles(contextId: string): Promise<INodeRefObj[]> {
       return SpinalGraphService.getChildren(contextId, [DEVICE_RELATION_NAME]).then((result) => {
          return result.map(el => el.get())
       }).catch((err) => {
@@ -46,7 +71,7 @@ export default class DeviceProfileUtilities {
       });
    }
 
-   public static getDevices(profilId: string): Promise<Array<{ name: string; type: string; id: string }>> {
+   public static getDevices(profilId: string): Promise<INodeRefObj[]> {
       return SpinalGraphService.getChildren(profilId, [PART_RELATION_NAME]).then((result) => {
          return result.map(el => el.get())
       }).catch((err) => {
@@ -54,38 +79,38 @@ export default class DeviceProfileUtilities {
       });
    }
 
-   public static getItemsList(deviceId: string): Promise<Array<{ name: string; type: string; id: string }>> {
+   public static getItemsList(deviceId: string): Promise<INodeRefObj[]> {
       return SpinalGraphService.getChildren(deviceId, [this.ITEM_LIST_RELATION]).then((itemList) => {
          const promises = itemList.map(el => SpinalGraphService.getChildren(el.id.get(), [this.ITEM_LIST_TO_ITEMS_RELATION]));
          return Promise.all(promises).then((items) => {
-            return Utilities._flatten(items).map(el => el.get())
+            return _.flattenDeep(items).map(el => el.get())
          })
       }).catch((err) => {
          return []
       });
    }
 
-   public static getItemInputs(itemId: string): Promise<Array<{ name: string; type: string; id: string }>> {
+   public static getItemInputs(itemId: string): Promise<INodeRefObj[]> {
       return SpinalGraphService.getChildren(itemId, [this.INPUTS_RELATION]).then((children) => {
          const promises = children.map(el => SpinalGraphService.getChildren(el.id.get(), [this.INPUT_RELATION]));
          return Promise.all(promises).then((result) => {
-            const flattedResult = Utilities._flatten(result);
+            const flattedResult = _.flattenDeep(result);
             return flattedResult.map(el => el.get());
          })
       })
    }
 
-   public static getItemOutputs(itemId: string): Promise<Array<{ name: string; type: string; id: string }>> {
+   public static getItemOutputs(itemId: string): Promise<INodeRefObj[]> {
       return SpinalGraphService.getChildren(itemId, [this.OUTPUTS_RELATION]).then((children) => {
          const promises = children.map(el => SpinalGraphService.getChildren(el.id.get(), [this.OUTPUT_RELATION]));
          return Promise.all(promises).then((result) => {
-            const flattedResult = Utilities._flatten(result);
+            const flattedResult = _.flattenDeep(result);
             return flattedResult.map(el => el.get());
          })
       })
    }
 
-   public static getDeviceContextTreeStructure(): Promise<Array<{ name: string; type: string; id: string }>> {
+   public static getDeviceContextTreeStructure(): Promise<INodeRefObj[]> {
       const contexts = this.getDevicesContexts()
       const promises = contexts.map(async el => {
          const profils = await this.getDeviceProfiles(el.id);
@@ -109,14 +134,14 @@ export default class DeviceProfileUtilities {
       return Promise.all(promises);
    }
 
-   public static getItemIO(nodeId: string): Promise<any> {
+   public static getItemIO(nodeId: string): Promise<{ nodeId: string;[key: string]: any }[]> {
       const inputsPromises = this.getItemInputs(nodeId);
       const outputsPromises = this.getItemOutputs(nodeId);
 
       return Promise.all([inputsPromises, outputsPromises]).then((result) => {
          // console.log("[input, output]", result);
 
-         const children = Utilities._flatten(result);
+         const children = _.flattenDeep(result);
 
          const promises = children.map(async child => {
             const realNode = SpinalGraphService.getRealNode(child.id);
@@ -133,18 +158,15 @@ export default class DeviceProfileUtilities {
             return obj;
          })
 
-         return Promise.all(promises).then((res) => {
-            return res;
-            // return result.flat();
-         })
+         return Promise.all(promises);
       })
    }
 
 
-   public static async getMeasures(nodeId: string): Promise<any> {
-      const supervisions: Array<SpinalNodeRef> = await SpinalGraphService.getChildren(nodeId, [this.ITEMS_TO_SUPERVISION]);
-      const measures: Array<SpinalNodeRef> = await SpinalGraphService.getChildren(supervisions[0]?.id?.get(), [this.SUPERVISION_TO_MEASURES]);
-      const children: Array<SpinalNodeRef> = await SpinalGraphService.getChildren(measures[0]?.id?.get(), [this.MEASURE_TO_ITEMS]);
+   public static async getMeasures(nodeId: string): Promise<{ nodeId: string; typeId: string | number;[key: string]: any }[]> {
+      const supervisions: SpinalNodeRef[] = await SpinalGraphService.getChildren(nodeId, [this.ITEMS_TO_SUPERVISION]);
+      const measures: SpinalNodeRef[] = await SpinalGraphService.getChildren(supervisions[0]?.id?.get(), [this.SUPERVISION_TO_MEASURES]);
+      const children: SpinalNodeRef[] = await SpinalGraphService.getChildren(measures[0]?.id?.get(), [this.MEASURE_TO_ITEMS]);
 
       const promises = children.map(async child => {
          const realNode = SpinalGraphService.getRealNode(child.id.get());
@@ -172,15 +194,9 @@ export default class DeviceProfileUtilities {
       })
    }
 
-   public static async getProfilBacnetValues(profilId: string, profilContextId?: string) {
+   public static async getProfilBacnetValues(profilId: string, profilContextId?: string): Promise<INodeRefObj[]> {
       if (typeof profilContextId === "undefined" || profilContextId.trim().length === 0) {
-         let realNode = SpinalGraphService.getRealNode(profilId);
-         if (!realNode) return;
-         const contextIds = realNode.getContextIds();
-         profilContextId = contextIds.find(id => {
-            let info = SpinalGraphService.getInfo(id);
-            return info && info.type.get() === this.DEVICE_PROFILE_CONTEXT;
-         })
+         profilContextId = this.getProfilContextId(profilId);
       }
 
       if (!profilContextId) return;
@@ -200,13 +216,13 @@ export default class DeviceProfileUtilities {
       });
    }
 
-   public static async getBacnetValuesMap(profilId: string): Promise<Map<any, any>> {
+   public static async getBacnetValuesMap(profilId: string): Promise<Map<string, INodeRefObj>> {
 
-      if (this.profilsMaps.get(profilId)) {
-         return this.profilsMaps.get(profilId);
-      }
+      // if (this.profilsMaps.get(profilId)) {
+      //    return this.profilsMaps.get(profilId);
+      // }
 
-      const bimDeviceMap: Map<any, any> = new Map();
+      const bimDeviceMap: Map<string, INodeRefObj> = new Map();
 
       const attrs = await this.getProfilBacnetValues(profilId);
 
@@ -218,9 +234,19 @@ export default class DeviceProfileUtilities {
       return bimDeviceMap;
    }
 
-   public static _getBacnetObjectType(type) {
+   public static _getBacnetObjectType(type): string | number {
       const objectName = ("object_" + type.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`)).toUpperCase();
       return bacnet.enum.ObjectTypes[objectName];
+   }
+
+   public static getProfilContextId(profilId: string): string {
+      let realNode = SpinalGraphService.getRealNode(profilId);
+      if (!realNode) return;
+      const contextIds = realNode.getContextIds();
+      return contextIds.find(id => {
+         let info = SpinalGraphService.getInfo(id);
+         return info && info.type.get() === this.DEVICE_PROFILE_CONTEXT;
+      })
    }
 }
 
