@@ -32,34 +32,39 @@ import { INodeRefObj } from "../data/INodeRefObj";
 
 export default abstract class DeviceProfileUtilities {
 
-   public static DEVICE_PROFILE_CONTEXT: string = "deviceProfileContext";
-   public static ITEM_LIST_RELATION: string = "hasItemList";
+   public static DEVICE_PROFILE_CONTEXT_NAME: string = "deviceProfileContext";
+   public static CONTEXT_TO_ITEM_LIST_RELATION: string = "hasItemList";
    public static ITEM_LIST_TO_ITEMS_RELATION: string = "hasItem";
 
    public static INPUTS_RELATION: string = "hasInputs";
    public static INPUT_RELATION: string = "hasInput";
-
    public static OUTPUTS_RELATION: string = "hasOutputs";
    public static OUTPUT_RELATION: string = "hasOutput";
 
-   public static PROFIL_TO_BACNET_RELATION: string = "hasBacnetValues";
+   public static GLOBAL_BACNET_VALUES_TYPE: string = "bacnetValues";
+   public static PROFIL_TO_BACNET_VALUES_RELATION: string = "hasBacnetValues";
 
-   public static ANALOG_VALUE_RELATION: string = "hasAnalogValues";
+   public static GLOBAL_SUPERVISION_TYPE: string = "globalDeviceSupervison";
+   public static PROFIL_TO_GLOBAL_SUPERVISION_RELATION: string = "hasGlobalSupervision";
+
+
    public static MULTISTATE_VALUE_RELATION: string = "hasMultiStateValues";
+   public static ANALOG_VALUE_RELATION: string = "hasAnalogValues";
    public static BINARY_VALUE_RELATION: string = "hasBinaryValues";
 
    public static ITEMS_TO_SUPERVISION: string = "hasSupervisionNode";
    public static SUPERVISION_TO_MEASURES: string = "hasMeasures";
    public static MEASURE_TO_ITEMS: string = "hasMeasure";
 
-   public static BACNET_VALUES_TYPE: string[] = ["networkValue", "binaryValue", "analogValue", "multiStateValue"];
+   public static BACNET_VALUES_TYPES: string[] = ["networkValue", "binaryValue", "analogValue", "multiStateValue"];
 
+   public static SUPERVISION_INTERVAL_TIME_TYPE: string = "supervisionIntervalTime";
 
    public static profilsMaps: Map<string, Map<string, INodeRefObj>> = new Map();
 
 
    public static getDevicesContexts(): INodeRefObj[] {
-      const result = SpinalGraphService.getContextWithType(this.DEVICE_PROFILE_CONTEXT)
+      const result = SpinalGraphService.getContextWithType(this.DEVICE_PROFILE_CONTEXT_NAME)
       return result.map(el => el.info.get())
    }
 
@@ -80,7 +85,7 @@ export default abstract class DeviceProfileUtilities {
    }
 
    public static getItemsList(deviceId: string): Promise<INodeRefObj[]> {
-      return SpinalGraphService.getChildren(deviceId, [this.ITEM_LIST_RELATION]).then((itemList) => {
+      return SpinalGraphService.getChildren(deviceId, [this.CONTEXT_TO_ITEM_LIST_RELATION]).then((itemList) => {
          const promises = itemList.map(el => SpinalGraphService.getChildren(el.id.get(), [this.ITEM_LIST_TO_ITEMS_RELATION]));
          return Promise.all(promises).then((items) => {
             return _.flattenDeep(items).map(el => el.get())
@@ -194,15 +199,25 @@ export default abstract class DeviceProfileUtilities {
       })
    }
 
+
+   public static async getGlobalBacnetValuesNode(profilId: string): Promise<SpinalNodeRef> {
+      return SpinalGraphService.getChildren(profilId, [this.PROFIL_TO_BACNET_VALUES_RELATION]).then((result) => {
+         return result[0]
+      })
+   }
+
    public static async getProfilBacnetValues(profilId: string, profilContextId?: string): Promise<INodeRefObj[]> {
       if (typeof profilContextId === "undefined" || profilContextId.trim().length === 0) {
          profilContextId = this.getProfilContextId(profilId);
       }
 
+      const bacnetValuesNodeRef = await this.getGlobalBacnetValuesNode(profilId);
+
       if (!profilContextId) return;
 
-      const bacnetValues = await SpinalGraphService.findInContext(profilId, profilContextId, (node) => {
-         if (this.BACNET_VALUES_TYPE.indexOf(node.getType().get()) !== -1) {
+      const startId = bacnetValuesNodeRef?.id.get() || profilId;
+      const bacnetValues = await SpinalGraphService.findInContext(startId, profilContextId, (node) => {
+         if (this.BACNET_VALUES_TYPES.indexOf(node.getType().get()) !== -1) {
             (<any>SpinalGraphService)._addNode(node);
             return true;
          }
@@ -234,6 +249,28 @@ export default abstract class DeviceProfileUtilities {
       return bimDeviceMap;
    }
 
+   public static async getGlobalSupervisionNode(profilId: string): Promise<SpinalNodeRef> {
+      return SpinalGraphService.getChildren(profilId, [this.PROFIL_TO_GLOBAL_SUPERVISION_RELATION]).then((result) => {
+         return result[0]
+      })
+   }
+
+   public static async getIntervalNodes(profilId: string, contexId?: string): Promise<SpinalNodeRef[]> {
+      if (!contexId) contexId = this.getProfilContextId(profilId);
+      const supervisionNode = await this.getGlobalSupervisionNode(profilId);
+
+      if (!supervisionNode) return;
+
+      return SpinalGraphService.findInContext(supervisionNode.id.get(), contexId, (node) => {
+         if (node.getType().get() === this.SUPERVISION_INTERVAL_TIME_TYPE) {
+            //@ts-ignore
+            SpinalGraphService._addNode(node);
+            return true;
+         }
+         return false;
+      })
+   }
+
    public static _getBacnetObjectType(type): string | number {
       const objectName = ("object_" + type.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`)).toUpperCase();
       return bacnet.enum.ObjectTypes[objectName];
@@ -245,7 +282,7 @@ export default abstract class DeviceProfileUtilities {
       const contextIds = realNode.getContextIds();
       return contextIds.find(id => {
          let info = SpinalGraphService.getInfo(id);
-         return info && info.type.get() === this.DEVICE_PROFILE_CONTEXT;
+         return info && info.type.get() === this.DEVICE_PROFILE_CONTEXT_NAME;
       })
    }
 }

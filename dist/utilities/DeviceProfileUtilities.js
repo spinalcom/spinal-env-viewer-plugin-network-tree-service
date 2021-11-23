@@ -40,7 +40,7 @@ const bacnet = require("bacstack");
 const _ = require("lodash");
 class DeviceProfileUtilities {
     static getDevicesContexts() {
-        const result = spinal_env_viewer_graph_service_1.SpinalGraphService.getContextWithType(this.DEVICE_PROFILE_CONTEXT);
+        const result = spinal_env_viewer_graph_service_1.SpinalGraphService.getContextWithType(this.DEVICE_PROFILE_CONTEXT_NAME);
         return result.map(el => el.info.get());
     }
     static getDeviceProfiles(contextId) {
@@ -58,7 +58,7 @@ class DeviceProfileUtilities {
         });
     }
     static getItemsList(deviceId) {
-        return spinal_env_viewer_graph_service_1.SpinalGraphService.getChildren(deviceId, [this.ITEM_LIST_RELATION]).then((itemList) => {
+        return spinal_env_viewer_graph_service_1.SpinalGraphService.getChildren(deviceId, [this.CONTEXT_TO_ITEM_LIST_RELATION]).then((itemList) => {
             const promises = itemList.map(el => spinal_env_viewer_graph_service_1.SpinalGraphService.getChildren(el.id.get(), [this.ITEM_LIST_TO_ITEMS_RELATION]));
             return Promise.all(promises).then((items) => {
                 return _.flattenDeep(items).map(el => el.get());
@@ -151,15 +151,24 @@ class DeviceProfileUtilities {
             });
         });
     }
+    static getGlobalBacnetValuesNode(profilId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return spinal_env_viewer_graph_service_1.SpinalGraphService.getChildren(profilId, [this.PROFIL_TO_BACNET_VALUES_RELATION]).then((result) => {
+                return result[0];
+            });
+        });
+    }
     static getProfilBacnetValues(profilId, profilContextId) {
         return __awaiter(this, void 0, void 0, function* () {
             if (typeof profilContextId === "undefined" || profilContextId.trim().length === 0) {
                 profilContextId = this.getProfilContextId(profilId);
             }
+            const bacnetValuesNodeRef = yield this.getGlobalBacnetValuesNode(profilId);
             if (!profilContextId)
                 return;
-            const bacnetValues = yield spinal_env_viewer_graph_service_1.SpinalGraphService.findInContext(profilId, profilContextId, (node) => {
-                if (this.BACNET_VALUES_TYPE.indexOf(node.getType().get()) !== -1) {
+            const startId = (bacnetValuesNodeRef === null || bacnetValuesNodeRef === void 0 ? void 0 : bacnetValuesNodeRef.id.get()) || profilId;
+            const bacnetValues = yield spinal_env_viewer_graph_service_1.SpinalGraphService.findInContext(startId, profilContextId, (node) => {
+                if (this.BACNET_VALUES_TYPES.indexOf(node.getType().get()) !== -1) {
                     spinal_env_viewer_graph_service_1.SpinalGraphService._addNode(node);
                     return true;
                 }
@@ -186,6 +195,30 @@ class DeviceProfileUtilities {
             return bimDeviceMap;
         });
     }
+    static getGlobalSupervisionNode(profilId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return spinal_env_viewer_graph_service_1.SpinalGraphService.getChildren(profilId, [this.PROFIL_TO_GLOBAL_SUPERVISION_RELATION]).then((result) => {
+                return result[0];
+            });
+        });
+    }
+    static getIntervalNodes(profilId, contexId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (!contexId)
+                contexId = this.getProfilContextId(profilId);
+            const supervisionNode = yield this.getGlobalSupervisionNode(profilId);
+            if (!supervisionNode)
+                return;
+            return spinal_env_viewer_graph_service_1.SpinalGraphService.findInContext(supervisionNode.id.get(), contexId, (node) => {
+                if (node.getType().get() === this.SUPERVISION_INTERVAL_TIME_TYPE) {
+                    //@ts-ignore
+                    spinal_env_viewer_graph_service_1.SpinalGraphService._addNode(node);
+                    return true;
+                }
+                return false;
+            });
+        });
+    }
     static _getBacnetObjectType(type) {
         const objectName = ("object_" + type.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`)).toUpperCase();
         return bacnet.enum.ObjectTypes[objectName];
@@ -197,26 +230,30 @@ class DeviceProfileUtilities {
         const contextIds = realNode.getContextIds();
         return contextIds.find(id => {
             let info = spinal_env_viewer_graph_service_1.SpinalGraphService.getInfo(id);
-            return info && info.type.get() === this.DEVICE_PROFILE_CONTEXT;
+            return info && info.type.get() === this.DEVICE_PROFILE_CONTEXT_NAME;
         });
     }
 }
 exports.default = DeviceProfileUtilities;
 exports.DeviceProfileUtilities = DeviceProfileUtilities;
-DeviceProfileUtilities.DEVICE_PROFILE_CONTEXT = "deviceProfileContext";
-DeviceProfileUtilities.ITEM_LIST_RELATION = "hasItemList";
+DeviceProfileUtilities.DEVICE_PROFILE_CONTEXT_NAME = "deviceProfileContext";
+DeviceProfileUtilities.CONTEXT_TO_ITEM_LIST_RELATION = "hasItemList";
 DeviceProfileUtilities.ITEM_LIST_TO_ITEMS_RELATION = "hasItem";
 DeviceProfileUtilities.INPUTS_RELATION = "hasInputs";
 DeviceProfileUtilities.INPUT_RELATION = "hasInput";
 DeviceProfileUtilities.OUTPUTS_RELATION = "hasOutputs";
 DeviceProfileUtilities.OUTPUT_RELATION = "hasOutput";
-DeviceProfileUtilities.PROFIL_TO_BACNET_RELATION = "hasBacnetValues";
-DeviceProfileUtilities.ANALOG_VALUE_RELATION = "hasAnalogValues";
+DeviceProfileUtilities.GLOBAL_BACNET_VALUES_TYPE = "bacnetValues";
+DeviceProfileUtilities.PROFIL_TO_BACNET_VALUES_RELATION = "hasBacnetValues";
+DeviceProfileUtilities.GLOBAL_SUPERVISION_TYPE = "globalDeviceSupervison";
+DeviceProfileUtilities.PROFIL_TO_GLOBAL_SUPERVISION_RELATION = "hasGlobalSupervision";
 DeviceProfileUtilities.MULTISTATE_VALUE_RELATION = "hasMultiStateValues";
+DeviceProfileUtilities.ANALOG_VALUE_RELATION = "hasAnalogValues";
 DeviceProfileUtilities.BINARY_VALUE_RELATION = "hasBinaryValues";
 DeviceProfileUtilities.ITEMS_TO_SUPERVISION = "hasSupervisionNode";
 DeviceProfileUtilities.SUPERVISION_TO_MEASURES = "hasMeasures";
 DeviceProfileUtilities.MEASURE_TO_ITEMS = "hasMeasure";
-DeviceProfileUtilities.BACNET_VALUES_TYPE = ["networkValue", "binaryValue", "analogValue", "multiStateValue"];
+DeviceProfileUtilities.BACNET_VALUES_TYPES = ["networkValue", "binaryValue", "analogValue", "multiStateValue"];
+DeviceProfileUtilities.SUPERVISION_INTERVAL_TIME_TYPE = "supervisionIntervalTime";
 DeviceProfileUtilities.profilsMaps = new Map();
 //# sourceMappingURL=DeviceProfileUtilities.js.map
