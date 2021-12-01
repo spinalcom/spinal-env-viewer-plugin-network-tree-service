@@ -51,9 +51,16 @@ class LinkBmsDeviceService {
                     }
                     const [bmsDevicesMap, bimDevicesMap] = yield Promise.all([this.getBmsEndpointsMap(bmsContextId, bmsDeviceId), this._getAutomateItems(bimDeviceId)]);
                     ;
-                    this._linkTwoMaps(bimDevicesMap, bmsDevicesMap, spinal_model_bmsnetwork_1.SpinalBmsEndpoint.relationName, spinal_env_viewer_graph_service_1.SPINAL_RELATION_PTR_LST_TYPE).then(() => __awaiter(this, void 0, void 0, function* () {
+                    console.log("bmsDevicesMap", bmsDevicesMap);
+                    console.log("bimDevicesMap", bimDevicesMap);
+                    const bimObj = { key: "parentId", map: bimDevicesMap };
+                    const bmsObj = { key: "id", map: bmsDevicesMap };
+                    return this._linkTwoMaps(bimObj, bmsObj, spinal_model_bmsnetwork_1.SpinalBmsEndpoint.relationName, spinal_env_viewer_graph_service_1.SPINAL_RELATION_PTR_LST_TYPE).then(() => __awaiter(this, void 0, void 0, function* () {
                         // await SpinalGraphService.addChild(bmsDeviceId, profilId, AUTOMATES_TO_PROFILE_RELATION, SPINAL_RELATION_PTR_LST_TYPE);
-                        yield spinal_env_viewer_graph_service_1.SpinalGraphService.addChild(bimDeviceId, bmsDeviceId, spinal_model_bmsnetwork_1.SpinalBmsDevice.relationName, spinal_env_viewer_graph_service_1.SPINAL_RELATION_PTR_LST_TYPE);
+                        try {
+                            yield spinal_env_viewer_graph_service_1.SpinalGraphService.addChild(bimDeviceId, bmsDeviceId, spinal_model_bmsnetwork_1.SpinalBmsDevice.relationName, spinal_env_viewer_graph_service_1.SPINAL_RELATION_PTR_LST_TYPE);
+                        }
+                        catch (error) { }
                     }));
                 }
                 else {
@@ -105,7 +112,9 @@ class LinkBmsDeviceService {
             //    }
             //    return;
             // })
-            return this._linkTwoMaps(bmsDevicesMap, profilDeviceMap, constants_1.OBJECT_TO_BACNET_ITEM_RELATION, spinal_env_viewer_graph_service_1.SPINAL_RELATION_PTR_LST_TYPE).then((result) => {
+            const bmsObj = { key: "id", map: bmsDevicesMap };
+            const profilObj = { key: "id", map: profilDeviceMap };
+            return this._linkTwoMaps(bmsObj, profilObj, constants_1.OBJECT_TO_BACNET_ITEM_RELATION, spinal_env_viewer_graph_service_1.SPINAL_RELATION_PTR_LST_TYPE).then((result) => {
                 try {
                     return spinal_env_viewer_graph_service_1.SpinalGraphService.addChild(bmsDeviceId, profilId, constants_1.AUTOMATES_TO_PROFILE_RELATION, spinal_env_viewer_graph_service_1.SPINAL_RELATION_PTR_LST_TYPE);
                 }
@@ -182,16 +191,16 @@ class LinkBmsDeviceService {
         });
     }
     static _linkTwoMaps(map1, map2, relationName, relationType, linkFirstToSecond = true) {
-        const firstMap = linkFirstToSecond ? map1 : map2;
-        const secondMap = linkFirstToSecond ? map2 : map1;
-        const keys = Array.from(firstMap.keys());
+        const first = linkFirstToSecond ? map1 : map2;
+        const second = linkFirstToSecond ? map2 : map1;
+        const keys = Array.from(first.map.keys());
         const promises = keys.map(key => {
-            const firstElement = firstMap.get(key);
-            const secondElement = secondMap.get(key);
+            const firstElement = first.map.get(key);
+            const secondElement = second.map.get(key);
             if (firstElement && secondElement) {
                 try {
                     // return Promise.all([
-                    return spinal_env_viewer_graph_service_1.SpinalGraphService.addChild(firstElement.parentId, secondElement.id, relationName, relationType);
+                    return spinal_env_viewer_graph_service_1.SpinalGraphService.addChild(firstElement[first.key], secondElement[second.key], relationName, relationType);
                     // SpinalGraphService.addChild(bmsElement.id, bimElement.nodeId, OBJECT_TO_BACNET_ITEM_RELATION, SPINAL_RELATION_PTR_LST_TYPE)
                     // ])
                 }

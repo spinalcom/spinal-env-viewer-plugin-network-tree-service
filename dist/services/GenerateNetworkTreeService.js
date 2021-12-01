@@ -179,8 +179,8 @@ class GenerateNetworkTreeService {
     static _formatAutomateAttribute(items) {
         const promises = items.map((el) => {
             return this._getBimObjectName(el).then((result) => {
-                el.id = result[0].dbId;
-                el.name = result[0].name;
+                el.id = result.dbId;
+                el.name = result.name;
                 el.property = el.property.displayValue;
                 el.isAutomate = true;
                 el.color = this._generateRandomColor();
@@ -300,13 +300,15 @@ class GenerateNetworkTreeService {
         });
     }
     static _addSpinalAttribute(id, namingConvention) {
-        if (!namingConvention || namingConvention.length === 0)
-            return;
-        const realNode = spinal_env_viewer_graph_service_1.SpinalGraphService.getRealNode(id);
-        if (!realNode)
-            return;
-        return spinal_env_viewer_plugin_documentation_service_1.serviceDocumentation.addCategoryAttribute(realNode, constants_1.ATTRIBUTE_CATEGORY).then((attributeCategory) => {
-            return spinal_env_viewer_plugin_documentation_service_1.serviceDocumentation.addAttributeByCategory(realNode, attributeCategory, "namingConvention", namingConvention);
+        return __awaiter(this, void 0, void 0, function* () {
+            if (!namingConvention || namingConvention.length === 0)
+                return;
+            const realNode = spinal_env_viewer_graph_service_1.SpinalGraphService.getRealNode(id);
+            if (!realNode)
+                return;
+            return spinal_env_viewer_plugin_documentation_service_1.serviceDocumentation.addCategoryAttribute(realNode, constants_1.ATTRIBUTE_CATEGORY).then((attributeCategory) => {
+                return spinal_env_viewer_plugin_documentation_service_1.serviceDocumentation.addAttributeByCategory(realNode, attributeCategory, "namingConvention", namingConvention);
+            });
         });
     }
 }

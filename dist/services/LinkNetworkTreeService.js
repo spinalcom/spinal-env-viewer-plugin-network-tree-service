@@ -36,7 +36,7 @@ const spinal_env_viewer_graph_service_1 = require("spinal-env-viewer-graph-servi
 const DeviceProfileUtilities_1 = require("../utilities/DeviceProfileUtilities");
 const constants_1 = require("../data/constants");
 const spinal_env_viewer_plugin_documentation_service_1 = require("spinal-env-viewer-plugin-documentation-service");
-const __1 = require("..");
+const LinkBmsDevicesService_1 = require("./LinkBmsDevicesService");
 const spinal_model_bmsnetwork_1 = require("spinal-model-bmsnetwork");
 class LinkNetworkTreeService {
     static createMaps(automateBims, profilItems) {
@@ -109,9 +109,10 @@ class LinkNetworkTreeService {
             return Promise.all(promises).then((result) => __awaiter(this, void 0, void 0, function* () {
                 yield spinal_env_viewer_graph_service_1.SpinalGraphService.removeChild(automateId, profilId, constants_1.AUTOMATES_TO_PROFILE_RELATION, spinal_env_viewer_graph_service_1.SPINAL_RELATION_PTR_LST_TYPE);
                 const bmsDevicesWithTheSameProfil = yield this.getBmsDeviceWithTheSameProfil(automateId, argProfilId);
+                console.log("bmsDevicesWithTheSameProfil", bmsDevicesWithTheSameProfil);
                 const prom = bmsDevicesWithTheSameProfil.map((device) => __awaiter(this, void 0, void 0, function* () {
                     const contextId = this.getBmsDeviceContextId(device);
-                    return __1.LinkBmsDeviceService.unLinkBmsDeviceToBimDevices(contextId, device.id.get(), automateId);
+                    return LinkBmsDevicesService_1.LinkBmsDeviceService.unLinkBmsDeviceToBimDevices(contextId, device.id.get(), automateId);
                 }));
                 yield Promise.all(prom);
                 return true;
@@ -188,6 +189,18 @@ class LinkNetworkTreeService {
         }));
         return Promise.all(promises);
     }
+    // public static _formatVirtualAutomates(profilItems: Array<INodeRefObj>): Promise<{ [key: string]: INodeRefObj[] }> {
+    //    const obj = {};
+    //    const promises = profilItems.map(async temp => {
+    //       temp.namingConvention = await this._getNamingConvention(temp.id, ATTRIBUTE_CATEGORY);
+    //       if(obj[temp.namingConvention]) obj[temp.namingConvention].push(temp);
+    //       else obj[temp.namingConvention] = [temp];
+    //       return temp;
+    //    })
+    //    return Promise.all(promises).then((result) => {
+    //       return obj;
+    //    })
+    // }
     static _getNamingConvention(nodeId, categoryName) {
         return __awaiter(this, void 0, void 0, function* () {
             const realNode = spinal_env_viewer_graph_service_1.SpinalGraphService.getRealNode(nodeId);

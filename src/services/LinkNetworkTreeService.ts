@@ -28,7 +28,7 @@ import { IResultClassed } from "../data/IResult";
 import { INodeRefObj } from "../data/INodeRefObj";
 import { NETWORK_BIMOJECT_RELATION, AUTOMATES_TO_PROFILE_RELATION, OBJECT_TO_BACNET_ITEM_RELATION, ATTRIBUTE_CATEGORY } from '../data/constants';
 import { serviceDocumentation } from "spinal-env-viewer-plugin-documentation-service";
-import { LinkBmsDeviceService } from '..';
+import { LinkBmsDeviceService } from './LinkBmsDevicesService';
 import { SpinalBmsDevice } from 'spinal-model-bmsnetwork';
 
 
@@ -110,6 +110,8 @@ export default abstract class LinkNetworkTreeService {
       return Promise.all(promises).then(async (result) => {
          await SpinalGraphService.removeChild(automateId, profilId, AUTOMATES_TO_PROFILE_RELATION, SPINAL_RELATION_PTR_LST_TYPE);
          const bmsDevicesWithTheSameProfil = await this.getBmsDeviceWithTheSameProfil(automateId, argProfilId);
+         console.log("bmsDevicesWithTheSameProfil", bmsDevicesWithTheSameProfil);
+
          const prom = bmsDevicesWithTheSameProfil.map(async device => {
             const contextId = this.getBmsDeviceContextId(device);
             return LinkBmsDeviceService.unLinkBmsDeviceToBimDevices(contextId, device.id.get(), automateId);
@@ -212,6 +214,20 @@ export default abstract class LinkNetworkTreeService {
 
       return Promise.all(promises);
    }
+
+   // public static _formatVirtualAutomates(profilItems: Array<INodeRefObj>): Promise<{ [key: string]: INodeRefObj[] }> {
+   //    const obj = {};
+   //    const promises = profilItems.map(async temp => {
+   //       temp.namingConvention = await this._getNamingConvention(temp.id, ATTRIBUTE_CATEGORY);
+   //       if(obj[temp.namingConvention]) obj[temp.namingConvention].push(temp);
+   //       else obj[temp.namingConvention] = [temp];
+   //       return temp;
+   //    })
+
+   //    return Promise.all(promises).then((result) => {
+   //       return obj;
+   //    })
+   // }
 
    public static async _getNamingConvention(nodeId: string, categoryName: string): Promise<string> {
       const realNode = SpinalGraphService.getRealNode(nodeId);

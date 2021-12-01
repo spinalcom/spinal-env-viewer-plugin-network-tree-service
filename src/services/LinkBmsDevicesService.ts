@@ -48,14 +48,20 @@ export default abstract class LinkBmsDeviceService {
             }
 
             const [bmsDevicesMap, bimDevicesMap] = await Promise.all([this.getBmsEndpointsMap(bmsContextId, bmsDeviceId), this._getAutomateItems(bimDeviceId)]);;
+            console.log("bmsDevicesMap", bmsDevicesMap);
+            console.log("bimDevicesMap", bimDevicesMap);
 
-            this._linkTwoMaps(bimDevicesMap, bmsDevicesMap, SpinalBmsEndpoint.relationName, SPINAL_RELATION_PTR_LST_TYPE).then(async () => {
+            const bimObj = { key: "parentId", map: bimDevicesMap };
+            const bmsObj = { key: "id", map: bmsDevicesMap };
+
+
+
+            return this._linkTwoMaps(bimObj, bmsObj, SpinalBmsEndpoint.relationName, SPINAL_RELATION_PTR_LST_TYPE).then(async () => {
                // await SpinalGraphService.addChild(bmsDeviceId, profilId, AUTOMATES_TO_PROFILE_RELATION, SPINAL_RELATION_PTR_LST_TYPE);
-               await SpinalGraphService.addChild(bimDeviceId, bmsDeviceId, SpinalBmsDevice.relationName, SPINAL_RELATION_PTR_LST_TYPE);
+               try {
+                  await SpinalGraphService.addChild(bimDeviceId, bmsDeviceId, SpinalBmsDevice.relationName, SPINAL_RELATION_PTR_LST_TYPE);
+               } catch (error) { }
             })
-
-
-
          } else {
             throw new Error("Node profil linked to bim object and bms object");
          }
@@ -112,8 +118,10 @@ export default abstract class LinkBmsDeviceService {
       //    }
       //    return;
       // })
+      const bmsObj = { key: "id", map: bmsDevicesMap };
+      const profilObj = { key: "id", map: profilDeviceMap };
 
-      return this._linkTwoMaps(bmsDevicesMap, profilDeviceMap, OBJECT_TO_BACNET_ITEM_RELATION, SPINAL_RELATION_PTR_LST_TYPE).then((result) => {
+      return this._linkTwoMaps(bmsObj, profilObj, OBJECT_TO_BACNET_ITEM_RELATION, SPINAL_RELATION_PTR_LST_TYPE).then((result) => {
          try {
             return SpinalGraphService.addChild(bmsDeviceId, profilId, AUTOMATES_TO_PROFILE_RELATION, SPINAL_RELATION_PTR_LST_TYPE);
          } catch (error) { return false }
@@ -196,20 +204,20 @@ export default abstract class LinkBmsDeviceService {
       })
    }
 
-   private static _linkTwoMaps(map1: Map<number | string, any>, map2: Map<number | string, any>, relationName: string, relationType: string, linkFirstToSecond: boolean = true): Promise<boolean[]> {
-      const firstMap = linkFirstToSecond ? map1 : map2;
-      const secondMap = linkFirstToSecond ? map2 : map1;
+   private static _linkTwoMaps(map1: { key: string, map: Map<number | string, any> }, map2: { key: string, map: Map<number | string, any> }, relationName: string, relationType: string, linkFirstToSecond: boolean = true): Promise<boolean[]> {
+      const first = linkFirstToSecond ? map1 : map2;
+      const second = linkFirstToSecond ? map2 : map1;
 
-      const keys = Array.from(firstMap.keys());
+      const keys = Array.from(first.map.keys());
 
       const promises = keys.map(key => {
-         const firstElement = firstMap.get(key);
-         const secondElement = secondMap.get(key);
+         const firstElement = first.map.get(key);
+         const secondElement = second.map.get(key);
 
          if (firstElement && secondElement) {
             try {
                // return Promise.all([
-               return SpinalGraphService.addChild(firstElement.parentId, secondElement.id, relationName, relationType)
+               return SpinalGraphService.addChild(firstElement[first.key], secondElement[second.key], relationName, relationType)
                // SpinalGraphService.addChild(bmsElement.id, bimElement.nodeId, OBJECT_TO_BACNET_ITEM_RELATION, SPINAL_RELATION_PTR_LST_TYPE)
                // ])
             } catch (error) {

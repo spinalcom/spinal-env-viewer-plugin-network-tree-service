@@ -208,8 +208,8 @@ export default abstract class GenerateNetworkTreeService {
    private static _formatAutomateAttribute(items: Array<IProperty>): Promise<IPropertyFormatted[]> {
       const promises = items.map((el: any) => {
          return this._getBimObjectName(el).then((result) => {
-            el.id = result[0].dbId;
-            el.name = result[0].name;
+            el.id = result.dbId;
+            el.name = result.name;
             el.property = el.property.displayValue;
             el.isAutomate = true;
             el.color = this._generateRandomColor();
@@ -358,7 +358,7 @@ export default abstract class GenerateNetworkTreeService {
       }
    }
 
-   private static _addSpinalAttribute(id: string, namingConvention: string): Promise<SpinalAttribute> {
+   private static async _addSpinalAttribute(id: string, namingConvention: string): Promise<SpinalAttribute> {
       if (!namingConvention || namingConvention.length === 0) return;
       const realNode = SpinalGraphService.getRealNode(id);
       if (!realNode) return;
