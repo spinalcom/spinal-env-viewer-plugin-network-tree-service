@@ -97,27 +97,36 @@ export default abstract class LinkNetworkTreeService {
    ////
    // supprimer un profil d'un automate
 
-   public static async unLinkDeviceToProfil(automateId: string, argProfilId: string): Promise<boolean | Array<boolean>> {
+   public static async unLinkDeviceToProfil(automateId: string, argProfilId: string, removeAlsoBmsDevice: boolean = false): Promise<boolean | Array<boolean>> {
       let profilId = argProfilId;
       if (typeof profilId === "undefined") {
          profilId = await this.getProfilLinked(automateId);
       }
+
+      if (!profilId) return;
+
+      let deviceMap;
+      if (removeAlsoBmsDevice) deviceMap = await this._getAutomateItemsMap(automateId, profilId);
+
       const itemsValids = await this._getAutomateItems(automateId);
       const promises = itemsValids.map(async (automateItem) => {
          return this.unLinkAutomateItemToProfilItem(automateItem.id);
       })
 
-      return Promise.all(promises).then(async (result) => {
+      return Promise.all(promises).then(async () => {
          await SpinalGraphService.removeChild(automateId, profilId, AUTOMATES_TO_PROFILE_RELATION, SPINAL_RELATION_PTR_LST_TYPE);
-         const bmsDevicesWithTheSameProfil = await this.getBmsDeviceWithTheSameProfil(automateId, argProfilId);
-         console.log("bmsDevicesWithTheSameProfil", bmsDevicesWithTheSameProfil);
 
-         const prom = bmsDevicesWithTheSameProfil.map(async device => {
-            const contextId = this.getBmsDeviceContextId(device);
-            return LinkBmsDeviceService.unLinkBmsDeviceToBimDevices(contextId, device.id.get(), automateId);
-         })
+         if (removeAlsoBmsDevice) {
+            const bmsDevicesWithTheSameProfil = await this.getBmsDeviceWithTheSameProfil(automateId, profilId);
 
-         await Promise.all(prom);
+            const prom = bmsDevicesWithTheSameProfil.map(async device => {
+               const contextId = this.getBmsDeviceContextId(device);
+               return LinkBmsDeviceService.unLinkBmsDeviceToBimDevices(contextId, device.id.get(), automateId, profilId, deviceMap);
+            })
+
+            await Promise.all(prom);
+         }
+
          return true;
       })
    }
@@ -131,12 +140,12 @@ export default abstract class LinkNetworkTreeService {
       return Promise.all(children.map(el => SpinalGraphService.removeChild(automateItemId, el.id.get(), OBJECT_TO_BACNET_ITEM_RELATION, SPINAL_RELATION_PTR_LST_TYPE)));
    }
 
-   public static async getDeviceAndProfilData(automateId: string): Promise<IResultClassed> {
+   public static async getDeviceAndProfilData(automateId: string, argProfilId?: string): Promise<IResultClassed> {
 
       const automateInfo = SpinalGraphService.getInfo(automateId)?.get() || {};
       const res = { valids: [], invalidAutomateItems: [], invalidProfileItems: [], automate: automateInfo }
 
-      const profilId = await this.getProfilLinked(automateId);
+      const profilId = argProfilId || await this.getProfilLinked(automateId);
 
       const automateItems = await this._getAutomateItems(automateId);
       let profilItems = await DeviceProfileUtilities.getItemsList(profilId);
@@ -148,6 +157,25 @@ export default abstract class LinkNetworkTreeService {
       return this._waitForEach(automateItems, profilItems, res).then((result) => {
          res.invalidProfileItems = result;
          return res
+      })
+   }
+
+   public static _getAutomateItemsMap(automateId: string, profilId?: string): Promise<Map<number, any>> {
+      const bimDeviceMap = new Map();
+
+      return this.getDeviceAndProfilData(automateId, profilId).then((result) => {
+         const promises = result.valids.map(async ({ automateItem, profileItem }) => {
+            const attrs = await DeviceProfileUtilities.getMeasures(profileItem.id);
+            for (const attr of attrs) {
+               (<any>attr).parentId = automateItem.id;
+               bimDeviceMap.set(`${attr.typeId}_${(parseInt((<any>attr).IDX) + 1)}`, attr);
+            }
+            return;
+         })
+
+         return Promise.all(promises).then(() => {
+            return bimDeviceMap;
+         })
       })
    }
 
@@ -288,8 +316,11 @@ export default abstract class LinkNetworkTreeService {
 
    public static async getBmsDeviceWithTheSameProfil(bimDeviceId: string, profilId: string): Promise<SpinalNodeRef[]> {
       const bmsDevices = await SpinalGraphService.getChildren(bimDeviceId, [SpinalBmsDevice.relationName]);
+      console.log("bmsDevices", bmsDevices)
       return bmsDevices.filter(device => {
          const ids = SpinalGraphService.getChildrenIds(device.id.get());
+         console.log("ids", ids, profilId);
+
          return ids.findIndex(id => id === profilId) !== -1;
       })
    }

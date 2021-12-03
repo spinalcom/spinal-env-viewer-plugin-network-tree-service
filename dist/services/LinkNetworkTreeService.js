@@ -96,25 +96,31 @@ class LinkNetworkTreeService {
     }
     ////
     // supprimer un profil d'un automate
-    static unLinkDeviceToProfil(automateId, argProfilId) {
+    static unLinkDeviceToProfil(automateId, argProfilId, removeAlsoBmsDevice = false) {
         return __awaiter(this, void 0, void 0, function* () {
             let profilId = argProfilId;
             if (typeof profilId === "undefined") {
                 profilId = yield this.getProfilLinked(automateId);
             }
+            if (!profilId)
+                return;
+            let deviceMap;
+            if (removeAlsoBmsDevice)
+                deviceMap = yield this._getAutomateItemsMap(automateId, profilId);
             const itemsValids = yield this._getAutomateItems(automateId);
             const promises = itemsValids.map((automateItem) => __awaiter(this, void 0, void 0, function* () {
                 return this.unLinkAutomateItemToProfilItem(automateItem.id);
             }));
-            return Promise.all(promises).then((result) => __awaiter(this, void 0, void 0, function* () {
+            return Promise.all(promises).then(() => __awaiter(this, void 0, void 0, function* () {
                 yield spinal_env_viewer_graph_service_1.SpinalGraphService.removeChild(automateId, profilId, constants_1.AUTOMATES_TO_PROFILE_RELATION, spinal_env_viewer_graph_service_1.SPINAL_RELATION_PTR_LST_TYPE);
-                const bmsDevicesWithTheSameProfil = yield this.getBmsDeviceWithTheSameProfil(automateId, argProfilId);
-                console.log("bmsDevicesWithTheSameProfil", bmsDevicesWithTheSameProfil);
-                const prom = bmsDevicesWithTheSameProfil.map((device) => __awaiter(this, void 0, void 0, function* () {
-                    const contextId = this.getBmsDeviceContextId(device);
-                    return LinkBmsDevicesService_1.LinkBmsDeviceService.unLinkBmsDeviceToBimDevices(contextId, device.id.get(), automateId);
-                }));
-                yield Promise.all(prom);
+                if (removeAlsoBmsDevice) {
+                    const bmsDevicesWithTheSameProfil = yield this.getBmsDeviceWithTheSameProfil(automateId, profilId);
+                    const prom = bmsDevicesWithTheSameProfil.map((device) => __awaiter(this, void 0, void 0, function* () {
+                        const contextId = this.getBmsDeviceContextId(device);
+                        return LinkBmsDevicesService_1.LinkBmsDeviceService.unLinkBmsDeviceToBimDevices(contextId, device.id.get(), automateId, profilId, deviceMap);
+                    }));
+                    yield Promise.all(prom);
+                }
                 return true;
             }));
         });
@@ -128,18 +134,34 @@ class LinkNetworkTreeService {
             return Promise.all(children.map(el => spinal_env_viewer_graph_service_1.SpinalGraphService.removeChild(automateItemId, el.id.get(), constants_1.OBJECT_TO_BACNET_ITEM_RELATION, spinal_env_viewer_graph_service_1.SPINAL_RELATION_PTR_LST_TYPE)));
         });
     }
-    static getDeviceAndProfilData(automateId) {
+    static getDeviceAndProfilData(automateId, argProfilId) {
         var _a;
         return __awaiter(this, void 0, void 0, function* () {
             const automateInfo = ((_a = spinal_env_viewer_graph_service_1.SpinalGraphService.getInfo(automateId)) === null || _a === void 0 ? void 0 : _a.get()) || {};
             const res = { valids: [], invalidAutomateItems: [], invalidProfileItems: [], automate: automateInfo };
-            const profilId = yield this.getProfilLinked(automateId);
+            const profilId = argProfilId || (yield this.getProfilLinked(automateId));
             const automateItems = yield this._getAutomateItems(automateId);
             let profilItems = yield DeviceProfileUtilities_1.DeviceProfileUtilities.getItemsList(profilId);
             // const promises = automateItems.map(el => SpinalGraphService.getChildren(el.id,[this.OBJECT_TO_BACNET_ITEM_RELATION]));
             return this._waitForEach(automateItems, profilItems, res).then((result) => {
                 res.invalidProfileItems = result;
                 return res;
+            });
+        });
+    }
+    static _getAutomateItemsMap(automateId, profilId) {
+        const bimDeviceMap = new Map();
+        return this.getDeviceAndProfilData(automateId, profilId).then((result) => {
+            const promises = result.valids.map(({ automateItem, profileItem }) => __awaiter(this, void 0, void 0, function* () {
+                const attrs = yield DeviceProfileUtilities_1.DeviceProfileUtilities.getMeasures(profileItem.id);
+                for (const attr of attrs) {
+                    attr.parentId = automateItem.id;
+                    bimDeviceMap.set(`${attr.typeId}_${(parseInt(attr.IDX) + 1)}`, attr);
+                }
+                return;
+            }));
+            return Promise.all(promises).then(() => {
+                return bimDeviceMap;
             });
         });
     }
@@ -248,8 +270,10 @@ class LinkNetworkTreeService {
     static getBmsDeviceWithTheSameProfil(bimDeviceId, profilId) {
         return __awaiter(this, void 0, void 0, function* () {
             const bmsDevices = yield spinal_env_viewer_graph_service_1.SpinalGraphService.getChildren(bimDeviceId, [spinal_model_bmsnetwork_1.SpinalBmsDevice.relationName]);
+            console.log("bmsDevices", bmsDevices);
             return bmsDevices.filter(device => {
                 const ids = spinal_env_viewer_graph_service_1.SpinalGraphService.getChildrenIds(device.id.get());
+                console.log("ids", ids, profilId);
                 return ids.findIndex(id => id === profilId) !== -1;
             });
         });

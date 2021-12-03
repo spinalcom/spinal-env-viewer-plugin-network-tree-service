@@ -49,7 +49,7 @@ class LinkBmsDeviceService {
                         yield this.unLinkProfilToBmsDevice(bmsContextId, bmsDeviceId);
                         yield this.linkProfilToBmsDevice(bmsContextId, bmsDeviceId, profilId);
                     }
-                    const [bmsDevicesMap, bimDevicesMap] = yield Promise.all([this.getBmsEndpointsMap(bmsContextId, bmsDeviceId), this._getAutomateItems(bimDeviceId)]);
+                    const [bmsDevicesMap, bimDevicesMap] = yield Promise.all([this.getBmsEndpointsMap(bmsContextId, bmsDeviceId), LinkNetworkTreeService_1.LinkNetworkTreeService._getAutomateItemsMap(bimDeviceId)]);
                     ;
                     console.log("bmsDevicesMap", bmsDevicesMap);
                     console.log("bimDevicesMap", bimDevicesMap);
@@ -72,11 +72,14 @@ class LinkBmsDeviceService {
             }
         });
     }
-    static unLinkBmsDeviceToBimDevices(bmsContextId, bmsDeviceId, bimDeviceId) {
+    static unLinkBmsDeviceToBimDevices(bmsContextId, bmsDeviceId, bimDeviceId, argProfilId, bimDeviceMap) {
         return __awaiter(this, void 0, void 0, function* () {
-            const profilId = yield this.getBacnetProfilLinked(bimDeviceId);
+            const profilId = argProfilId || (yield this.getBacnetProfilLinked(bimDeviceId));
             if (profilId) {
-                const [bmsDevicesMap, bimDevicesMap] = yield Promise.all([this.getBmsEndpointsMap(bmsContextId, bmsDeviceId), this._getAutomateItems(bimDeviceId)]);
+                const bmsDeviceMapProm = this.getBmsEndpointsMap(bmsContextId, bmsDeviceId);
+                const bimDeviceMapProm = bimDeviceMap ? Promise.resolve(bimDeviceMap) : LinkNetworkTreeService_1.LinkNetworkTreeService._getAutomateItemsMap(bimDeviceId);
+                const [bmsDevicesMap, bimDevicesMap] = yield Promise.all([bmsDeviceMapProm, bimDeviceMapProm]);
+                console.log("unLinkBmsDeviceToBimDevices", bmsDevicesMap, bimDevicesMap);
                 this._unLinkTwoMaps(bimDevicesMap, bmsDevicesMap, spinal_model_bmsnetwork_1.SpinalBmsDevice.relationName, spinal_env_viewer_graph_service_1.SPINAL_RELATION_PTR_LST_TYPE).then(() => __awaiter(this, void 0, void 0, function* () {
                     // await SpinalGraphService.removeChild(bmsDeviceId, profilId, AUTOMATES_TO_PROFILE_RELATION, SPINAL_RELATION_PTR_LST_TYPE);
                     try {
@@ -174,22 +177,22 @@ class LinkBmsDeviceService {
                 return children[0].id.get();
         });
     }
-    static _getAutomateItems(automateId) {
-        const bimDeviceMap = new Map();
-        return LinkNetworkTreeService_1.LinkNetworkTreeService.getDeviceAndProfilData(automateId).then((result) => {
-            const promises = result.valids.map(({ automateItem, profileItem }) => __awaiter(this, void 0, void 0, function* () {
-                const attrs = yield DeviceProfileUtilities_1.default.getMeasures(profileItem.id);
-                for (const attr of attrs) {
-                    attr.parentId = automateItem.id;
-                    bimDeviceMap.set(`${attr.typeId}_${(parseInt(attr.IDX) + 1)}`, attr);
-                }
-                return;
-            }));
-            return Promise.all(promises).then(() => {
-                return bimDeviceMap;
-            });
-        });
-    }
+    // private static _getAutomateItems(automateId: string): Promise<Map<number, any>> {
+    //    const bimDeviceMap = new Map();
+    //    return LinkNetworkTreeService.getDeviceAndProfilData(automateId).then((result) => {
+    //       const promises = result.valids.map(async ({ automateItem, profileItem }) => {
+    //          const attrs = await DeviceProfileUtilities.getMeasures(profileItem.id);
+    //          for (const attr of attrs) {
+    //             (<any>attr).parentId = automateItem.id;
+    //             bimDeviceMap.set(`${attr.typeId}_${(parseInt((<any>attr).IDX) + 1)}`, attr);
+    //          }
+    //          return;
+    //       })
+    //       return Promise.all(promises).then(() => {
+    //          return bimDeviceMap;
+    //       })
+    //    })
+    // }
     static _linkTwoMaps(map1, map2, relationName, relationType, linkFirstToSecond = true) {
         const first = linkFirstToSecond ? map1 : map2;
         const second = linkFirstToSecond ? map2 : map1;

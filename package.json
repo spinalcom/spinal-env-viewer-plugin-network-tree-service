@@ -1,6 +1,6 @@
 {
   "name": "spinal-env-viewer-plugin-network-tree-service",
-  "version": "1.4.5",
+  "version": "1.5.6",
   "description": "",
   "main": "dist/index.js",
   "scripts": {

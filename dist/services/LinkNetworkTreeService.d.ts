@@ -10,9 +10,10 @@ export default abstract class LinkNetworkTreeService {
     }>): Promise<boolean | Array<boolean>>;
     static linkAutomateItemToProfilItem(automateItemId: string, profilItemId: string): Promise<boolean>;
     static getProfilLinked(automateId: string): Promise<string>;
-    static unLinkDeviceToProfil(automateId: string, argProfilId: string): Promise<boolean | Array<boolean>>;
+    static unLinkDeviceToProfil(automateId: string, argProfilId: string, removeAlsoBmsDevice?: boolean): Promise<boolean | Array<boolean>>;
     static unLinkAutomateItemToProfilItem(automateItemId: string, profilItemId?: string): Promise<boolean | Array<boolean>>;
-    static getDeviceAndProfilData(automateId: string): Promise<IResultClassed>;
+    static getDeviceAndProfilData(automateId: string, argProfilId?: string): Promise<IResultClassed>;
+    static _getAutomateItemsMap(automateId: string, profilId?: string): Promise<Map<number, any>>;
     static _getFormatedValues(automateInfo: INodeRefObj, virtualAutomates: Array<INodeRefObj>): Promise<IResultClassed>;
     static _getAutomateItems(automateId: string): Promise<Array<INodeRefObj>>;
     static _formatVirtualAutomates(profilItems: Array<INodeRefObj>): Promise<INodeRefObj[]>;
