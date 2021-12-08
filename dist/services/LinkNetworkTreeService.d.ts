@@ -16,7 +16,9 @@ export default abstract class LinkNetworkTreeService {
     static _getAutomateItemsMap(automateId: string, profilId?: string): Promise<Map<number, any>>;
     static _getFormatedValues(automateInfo: INodeRefObj, virtualAutomates: Array<INodeRefObj>): Promise<IResultClassed>;
     static _getAutomateItems(automateId: string): Promise<Array<INodeRefObj>>;
-    static _formatVirtualAutomates(profilItems: Array<INodeRefObj>): Promise<INodeRefObj[]>;
+    static _formatVirtualAutomates(profilItems: Array<INodeRefObj>): Promise<{
+        [key: string]: INodeRefObj;
+    }>;
     static _getNamingConvention(nodeId: string, categoryName: string): Promise<string>;
     static _createRelationBetweenNodes(automateId: string, deviceProfilId: string, itemsValids: Array<{
         automateItem: INodeRefObj;

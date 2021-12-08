@@ -170,27 +170,30 @@ class LinkNetworkTreeService {
     ////////////////////////////////////////////////////////////////////////////////////
     static _getFormatedValues(automateInfo, virtualAutomates) {
         // const devicesModels = await (SpinalGraphService.getChildren(automateId,[NETWORK_BIMOJECT_RELATION]))
-        return Promise.all([this._getAutomateItems(automateInfo.id), this._formatVirtualAutomates(virtualAutomates)]).then(([devices, items]) => {
+        return Promise.all([this._getAutomateItems(automateInfo.id), this._formatVirtualAutomates(virtualAutomates)]).then(([devices, profilItemsObj]) => {
             const res = { valids: [], invalidAutomateItems: [], invalidProfileItems: [], automate: automateInfo };
-            let remainingItems = JSON.parse(JSON.stringify(items));
+            // let remainingItems = JSON.parse(JSON.stringify(items))
             for (const device of devices) {
-                let index;
-                const found = remainingItems.find((el, i) => {
-                    if (el.namingConvention && el.namingConvention === device.namingConvention) {
-                        index = i;
-                        return true;
-                    }
-                    return false;
-                });
+                // let index;
+                // const found = remainingItems.find((el, i) => {
+                //    if (el.namingConvention && el.namingConvention === device.namingConvention) {
+                //       index = i;
+                //       return true;
+                //    }
+                //    return false;
+                // });
+                let found = profilItemsObj[device.namingConvention];
                 if (found) {
-                    remainingItems.splice(index, 1);
+                    // remainingItems.splice(index, 1);
+                    delete profilItemsObj[device.namingConvention];
                     res.valids.push({ automateItem: device, profileItem: found });
                 }
                 else {
                     res.invalidAutomateItems.push(device);
                 }
             }
-            res.invalidProfileItems = remainingItems;
+            // res.invalidProfileItems = remainingItems;
+            res.invalidProfileItems = Object.keys(profilItemsObj).map(key => profilItemsObj[key]);
             return res;
         });
     }
@@ -205,11 +208,15 @@ class LinkNetworkTreeService {
         });
     }
     static _formatVirtualAutomates(profilItems) {
+        const object = {};
         const promises = profilItems.map((temp) => __awaiter(this, void 0, void 0, function* () {
-            temp.namingConvention = yield this._getNamingConvention(temp.id, constants_1.ATTRIBUTE_CATEGORY);
-            return temp;
+            const namingConvention = yield this._getNamingConvention(temp.id, constants_1.ATTRIBUTE_CATEGORY);
+            temp.namingConvention = namingConvention;
+            return object[namingConvention] = temp;
         }));
-        return Promise.all(promises);
+        return Promise.all(promises).then(() => {
+            return object;
+        });
     }
     // public static _formatVirtualAutomates(profilItems: Array<INodeRefObj>): Promise<{ [key: string]: INodeRefObj[] }> {
     //    const obj = {};
@@ -229,9 +236,11 @@ class LinkNetworkTreeService {
             if (realNode) {
                 const attributes = yield spinal_env_viewer_plugin_documentation_service_1.serviceDocumentation.getAttributesByCategory(realNode, categoryName);
                 if (attributes && attributes.length > 0) {
-                    const attr = attributes.find(el => el.label.get() === "namingConvention");
-                    if (attr)
-                        return attr.value.get();
+                    const attr = attributes.find(el => el.label.get().trim().toLowerCase() === "namingConvention".toLocaleLowerCase());
+                    if (attr) {
+                        const value = attr.value.get();
+                        return value.trim().toLowerCase();
+                    }
                 }
             }
         });

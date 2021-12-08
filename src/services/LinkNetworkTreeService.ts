@@ -189,32 +189,37 @@ export default abstract class LinkNetworkTreeService {
 
       // const devicesModels = await (SpinalGraphService.getChildren(automateId,[NETWORK_BIMOJECT_RELATION]))
 
-      return Promise.all([this._getAutomateItems(automateInfo.id), this._formatVirtualAutomates(virtualAutomates)]).then(([devices, items]) => {
+      return Promise.all([this._getAutomateItems(automateInfo.id), this._formatVirtualAutomates(virtualAutomates)]).then(([devices, profilItemsObj]) => {
 
 
          const res = { valids: [], invalidAutomateItems: [], invalidProfileItems: [], automate: automateInfo }
 
-         let remainingItems = JSON.parse(JSON.stringify(items))
+         // let remainingItems = JSON.parse(JSON.stringify(items))
+
 
          for (const device of devices) {
-            let index;
-            const found = remainingItems.find((el, i) => {
-               if (el.namingConvention && el.namingConvention === device.namingConvention) {
-                  index = i;
-                  return true;
-               }
-               return false;
-            });
+            // let index;
+            // const found = remainingItems.find((el, i) => {
+            //    if (el.namingConvention && el.namingConvention === device.namingConvention) {
+            //       index = i;
+            //       return true;
+            //    }
+            //    return false;
+            // });
+
+            let found = profilItemsObj[device.namingConvention];
 
             if (found) {
-               remainingItems.splice(index, 1);
+               // remainingItems.splice(index, 1);
+               delete profilItemsObj[device.namingConvention];
                res.valids.push({ automateItem: device, profileItem: found });
             } else {
                res.invalidAutomateItems.push(device)
             }
          }
 
-         res.invalidProfileItems = remainingItems;
+         // res.invalidProfileItems = remainingItems;
+         res.invalidProfileItems = Object.keys(profilItemsObj).map(key => profilItemsObj[key]);
 
          return res;
       })
@@ -234,13 +239,17 @@ export default abstract class LinkNetworkTreeService {
       })
    }
 
-   public static _formatVirtualAutomates(profilItems: Array<INodeRefObj>): Promise<INodeRefObj[]> {
+   public static _formatVirtualAutomates(profilItems: Array<INodeRefObj>): Promise<{ [key: string]: INodeRefObj }> {
+      const object = {}
       const promises = profilItems.map(async temp => {
-         temp.namingConvention = await this._getNamingConvention(temp.id, ATTRIBUTE_CATEGORY);
-         return temp;
+         const namingConvention = await this._getNamingConvention(temp.id, ATTRIBUTE_CATEGORY)
+         temp.namingConvention = namingConvention;
+         return object[namingConvention] = temp;
       })
 
-      return Promise.all(promises);
+      return Promise.all(promises).then(() => {
+         return object;
+      })
    }
 
    // public static _formatVirtualAutomates(profilItems: Array<INodeRefObj>): Promise<{ [key: string]: INodeRefObj[] }> {
@@ -263,8 +272,11 @@ export default abstract class LinkNetworkTreeService {
          const attributes = await serviceDocumentation.getAttributesByCategory(realNode, categoryName);
 
          if (attributes && attributes.length > 0) {
-            const attr = attributes.find(el => el.label.get() === "namingConvention");
-            if (attr) return attr.value.get();
+            const attr = attributes.find(el => el.label.get().trim().toLowerCase() === "namingConvention".toLocaleLowerCase());
+            if (attr) {
+               const value = attr.value.get();
+               return value.trim().toLowerCase()
+            }
          }
 
       }
