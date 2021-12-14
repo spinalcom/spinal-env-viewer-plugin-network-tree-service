@@ -19,6 +19,9 @@ export default abstract class LinkNetworkTreeService {
     static _formatVirtualAutomates(profilItems: Array<INodeRefObj>): Promise<{
         [key: string]: INodeRefObj;
     }>;
+    static _formatVirtualAutomatesWithOutSplit(profilItems: Array<INodeRefObj>): Promise<{
+        [key: string]: INodeRefObj;
+    }>;
     static _getNamingConvention(nodeId: string, categoryName: string): Promise<string>;
     static _createRelationBetweenNodes(automateId: string, deviceProfilId: string, itemsValids: Array<{
         automateItem: INodeRefObj;

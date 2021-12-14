@@ -242,6 +242,28 @@ export default abstract class LinkNetworkTreeService {
    public static _formatVirtualAutomates(profilItems: Array<INodeRefObj>): Promise<{ [key: string]: INodeRefObj }> {
       const object = {}
       const promises = profilItems.map(async temp => {
+         const namingConvention = await this._getNamingConvention(temp.id, ATTRIBUTE_CATEGORY);
+         if (namingConvention) {
+            namingConvention.split("/").forEach(namingC => {
+               const tempCopy = Object.assign({}, temp);
+               tempCopy.namingConvention = namingC.trim().toLowerCase();
+               object[namingC.trim().toLowerCase()] = tempCopy
+            })
+         }
+         return;
+         // temp.namingConvention = namingConvention;
+         // return object[namingConvention] = temp;
+      })
+
+      return Promise.all(promises).then(() => {
+         return object;
+      })
+   }
+
+   // old version of _formatVirtualAutomates
+   public static _formatVirtualAutomatesWithOutSplit(profilItems: Array<INodeRefObj>): Promise<{ [key: string]: INodeRefObj }> {
+      const object = {}
+      const promises = profilItems.map(async temp => {
          const namingConvention = await this._getNamingConvention(temp.id, ATTRIBUTE_CATEGORY)
          temp.namingConvention = namingConvention;
          return object[namingConvention] = temp;
