@@ -46,6 +46,9 @@ export default abstract class DeviceProfileUtilities {
 
    public static GLOBAL_SUPERVISION_TYPE: string = "globalDeviceSupervison";
    public static PROFIL_TO_GLOBAL_SUPERVISION_RELATION: string = "hasGlobalSupervision";
+   public static GLOBAL_MEASURES_RELATION: string = "hasGlobalMeasures";
+   public static GLOBAL_ALARMS_RELATION: string = "hasGlobalAlarms";
+   public static GLOBAL_COMMANDS_RELATION: string = "hasGlobalCommands";
 
 
    public static MULTISTATE_VALUE_RELATION: string = "hasMultiStateValues";
@@ -285,6 +288,136 @@ export default abstract class DeviceProfileUtilities {
          return info && info.type.get() === this.DEVICE_PROFILE_CONTEXT_NAME;
       })
    }
+
+
+
+   public static async getGlobalMeasureNode(profileId: string): Promise<SpinalNodeRef> {
+      const supervision = await this.getGlobalSupervisionNode(profileId);
+
+      if (!supervision) return;
+
+      const measures = await SpinalGraphService.getChildren(supervision.id.get(), [this.GLOBAL_MEASURES_RELATION]);
+
+      return measures[0];
+   }
+
+   public static async getGlobalAlarmNode(profileId: string): Promise<SpinalNodeRef> {
+      const supervision = await this.getGlobalSupervisionNode(profileId);
+      if (!supervision) return;
+
+      const alarms = await SpinalGraphService.getChildren(supervision.id.get(), [this.GLOBAL_ALARMS_RELATION]);
+      return alarms[0];
+   }
+
+   public static async getGlobalCommandNode(profileId: string): Promise<SpinalNodeRef> {
+      const supervision = await this.getGlobalSupervisionNode(profileId);
+      if (!supervision) return;
+
+      const commands = await SpinalGraphService.getChildren(supervision.id.get(), [this.GLOBAL_COMMANDS_RELATION]);
+      return commands[0];
+   }
+
+
+
+
+   public static async getMeasuresDetails(profileId: string) {
+      const node = await this.getGlobalMeasureNode(profileId);
+      if (!node) return {};
+
+      return this._getNodeIntervalDetails(node.id.get());
+   }
+
+   public static async getAlarmsDetails(profileId: string) {
+      const node = await this.getGlobalAlarmNode(profileId);
+      if (!node) return {};
+
+      return this._getNodeIntervalDetails(node.id.get());
+   }
+
+   public static async getCommandsDetails(profileId: string): Promise<{}>{
+      const node = await this.getGlobalMeasureNode(profileId);
+      if (!node) return {};
+
+      return {}
+   }
+
+   public static async getGlobalSupervisionDetails(profileId: string): Promise<{measures: any; alarms: any; commands: any}> {
+      return {
+         measures: await this.getMeasuresDetails(profileId),
+         alarms: await this.getAlarmsDetails(profileId),
+         commands: await this.getCommandsDetails(profileId)
+      }
+   }
+
+
+
+   ////////////////////////////////////////////////////////
+   //                            PRIVATES                //
+   ////////////////////////////////////////////////////////
+
+   private static async _getNodeIntervalDetails(nodeId: string): Promise<any[] | {
+      monitoring: any;
+      children: any[];
+   }[]> {
+      const intervalsNodes = await this._getNodeIntervals(nodeId);
+      const promises = intervalsNodes.map(async (el) => {
+         return {
+            monitoring: await this._getSharedAttribute(el),
+            children: await this._getEndpointsObjectIds(el),
+         };
+      });
+
+      return Promise.all(promises)
+         .then((result) => {
+            return result;
+         })
+         .catch((err) => {
+            console.error(err);
+            return [];
+         });
+   }
+
+   private static _getNodeIntervals(nodeId: string): Promise<SpinalNodeRef[]> {
+      return SpinalGraphService.getChildren(nodeId, [])
+   }
+
+   private static async _getSharedAttribute(intervalNode: SpinalNodeRef) {
+      const realNode = SpinalGraphService.getRealNode(intervalNode.id.get());
+      const attrs = await serviceDocumentation.getAttributesByCategory(realNode, "Supervision");
+
+      const obj = {};
+      for (let i = 0; i < attrs.length; i++) {
+         const element = attrs[i];
+         obj[element.label.get()] = element.value.get();
+      }
+
+      return obj;
+   }
+
+   private static async _getEndpointsObjectIds(intervalNode: SpinalNodeRef) {
+      const nodeId = intervalNode.id.get();
+      const profilItems = await SpinalGraphService.getChildren(nodeId, ["hasIntervalTime"]);
+
+      const promises = profilItems.map(async (profilItem) => {
+         return {
+            instance: await this._getIDX(profilItem.id.get()),
+            type: this._getBacnetObjectType(profilItem.type.get()),
+         };
+      });
+
+      return Promise.all(promises).then((result) => {
+         return _.flattenDeep(result);
+      });
+   }
+
+   private static async _getIDX(nodeId: string): Promise<number> {
+      const realNode = SpinalGraphService.getRealNode(nodeId);
+      const attrs = await serviceDocumentation.getAttributesByCategory(realNode, "default");
+
+      const found: any = attrs.find((attr) => attr.label.get() === "IDX");
+      if (found) return parseInt(found.value.get()) + 1;
+   }
+
 }
 
 

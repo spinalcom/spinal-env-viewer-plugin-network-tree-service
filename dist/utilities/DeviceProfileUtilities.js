@@ -32,6 +32,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.DeviceProfileUtilities = void 0;
 const spinal_env_viewer_graph_service_1 = require("spinal-env-viewer-graph-service");
 const constants_1 = require("spinal-env-viewer-plugin-device_profile/constants");
 const spinal_env_viewer_plugin_documentation_service_1 = require("spinal-env-viewer-plugin-documentation-service");
@@ -233,6 +234,127 @@ class DeviceProfileUtilities {
             return info && info.type.get() === this.DEVICE_PROFILE_CONTEXT_NAME;
         });
     }
+    static getGlobalMeasureNode(profileId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const supervision = yield this.getGlobalSupervisionNode(profileId);
+            if (!supervision)
+                return;
+            const measures = yield spinal_env_viewer_graph_service_1.SpinalGraphService.getChildren(supervision.id.get(), [this.GLOBAL_MEASURES_RELATION]);
+            return measures[0];
+        });
+    }
+    static getGlobalAlarmNode(profileId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const supervision = yield this.getGlobalSupervisionNode(profileId);
+            if (!supervision)
+                return;
+            const alarms = yield spinal_env_viewer_graph_service_1.SpinalGraphService.getChildren(supervision.id.get(), [this.GLOBAL_ALARMS_RELATION]);
+            return alarms[0];
+        });
+    }
+    static getGlobalCommandNode(profileId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const supervision = yield this.getGlobalSupervisionNode(profileId);
+            if (!supervision)
+                return;
+            const commands = yield spinal_env_viewer_graph_service_1.SpinalGraphService.getChildren(supervision.id.get(), [this.GLOBAL_COMMANDS_RELATION]);
+            return commands[0];
+        });
+    }
+    static getMeasuresDetails(profileId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const node = yield this.getGlobalMeasureNode(profileId);
+            if (!node)
+                return {};
+            return this._getNodeIntervalDetails(node.id.get());
+        });
+    }
+    static getAlarmsDetails(profileId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const node = yield this.getGlobalAlarmNode(profileId);
+            if (!node)
+                return {};
+            return this._getNodeIntervalDetails(node.id.get());
+        });
+    }
+    static getCommandsDetails(profileId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const node = yield this.getGlobalMeasureNode(profileId);
+            if (!node)
+                return {};
+            return {};
+        });
+    }
+    static getGlobalSupervisionDetails(profileId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return {
+                measures: yield this.getMeasuresDetails(profileId),
+                alarms: yield this.getAlarmsDetails(profileId),
+                commands: yield this.getCommandsDetails(profileId)
+            };
+        });
+    }
+    ////////////////////////////////////////////////////////
+    //                            PRIVATES                //
+    ////////////////////////////////////////////////////////
+    static _getNodeIntervalDetails(nodeId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const intervalsNodes = yield this._getNodeIntervals(nodeId);
+            const promises = intervalsNodes.map((el) => __awaiter(this, void 0, void 0, function* () {
+                return {
+                    monitoring: yield this._getSharedAttribute(el),
+                    children: yield this._getEndpointsObjectIds(el),
+                };
+            }));
+            return Promise.all(promises)
+                .then((result) => {
+                return result;
+            })
+                .catch((err) => {
+                console.error(err);
+                return [];
+            });
+        });
+    }
+    static _getNodeIntervals(nodeId) {
+        return spinal_env_viewer_graph_service_1.SpinalGraphService.getChildren(nodeId, []);
+    }
+    static _getSharedAttribute(intervalNode) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const realNode = spinal_env_viewer_graph_service_1.SpinalGraphService.getRealNode(intervalNode.id.get());
+            const attrs = yield spinal_env_viewer_plugin_documentation_service_1.serviceDocumentation.getAttributesByCategory(realNode, "Supervision");
+            const obj = {};
+            for (let i = 0; i < attrs.length; i++) {
+                const element = attrs[i];
+                obj[element.label.get()] = element.value.get();
+            }
+            return obj;
+        });
+    }
+    static _getEndpointsObjectIds(intervalNode) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const nodeId = intervalNode.id.get();
+            const profilItems = yield spinal_env_viewer_graph_service_1.SpinalGraphService.getChildren(nodeId, ["hasIntervalTime"]);
+            const promises = profilItems.map((profilItem) => __awaiter(this, void 0, void 0, function* () {
+                return {
+                    instance: yield this._getIDX(profilItem.id.get()),
+                    type: this._getBacnetObjectType(profilItem.type.get()),
+                };
+            }));
+            return Promise.all(promises).then((result) => {
+                return _.flattenDeep(result);
+            });
+        });
+    }
+    static _getIDX(nodeId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const realNode = spinal_env_viewer_graph_service_1.SpinalGraphService.getRealNode(nodeId);
+            const attrs = yield spinal_env_viewer_plugin_documentation_service_1.serviceDocumentation.getAttributesByCategory(realNode, "default");
+            const found = attrs.find((attr) => attr.label.get() === "IDX");
+            if (found)
+                return parseInt(found.value.get()) + 1;
+        });
+    }
 }
 exports.default = DeviceProfileUtilities;
 exports.DeviceProfileUtilities = DeviceProfileUtilities;
@@ -247,6 +369,9 @@ DeviceProfileUtilities.GLOBAL_BACNET_VALUES_TYPE = "bacnetValues";
 DeviceProfileUtilities.PROFIL_TO_BACNET_VALUES_RELATION = "hasBacnetValues";
 DeviceProfileUtilities.GLOBAL_SUPERVISION_TYPE = "globalDeviceSupervison";
 DeviceProfileUtilities.PROFIL_TO_GLOBAL_SUPERVISION_RELATION = "hasGlobalSupervision";
+DeviceProfileUtilities.GLOBAL_MEASURES_RELATION = "hasGlobalMeasures";
+DeviceProfileUtilities.GLOBAL_ALARMS_RELATION = "hasGlobalAlarms";
+DeviceProfileUtilities.GLOBAL_COMMANDS_RELATION = "hasGlobalCommands";
 DeviceProfileUtilities.MULTISTATE_VALUE_RELATION = "hasMultiStateValues";
 DeviceProfileUtilities.ANALOG_VALUE_RELATION = "hasAnalogValues";
 DeviceProfileUtilities.BINARY_VALUE_RELATION = "hasBinaryValues";

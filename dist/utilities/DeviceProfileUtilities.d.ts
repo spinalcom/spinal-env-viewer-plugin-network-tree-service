@@ -12,6 +12,9 @@ export default abstract class DeviceProfileUtilities {
     static PROFIL_TO_BACNET_VALUES_RELATION: string;
     static GLOBAL_SUPERVISION_TYPE: string;
     static PROFIL_TO_GLOBAL_SUPERVISION_RELATION: string;
+    static GLOBAL_MEASURES_RELATION: string;
+    static GLOBAL_ALARMS_RELATION: string;
+    static GLOBAL_COMMANDS_RELATION: string;
     static MULTISTATE_VALUE_RELATION: string;
     static ANALOG_VALUE_RELATION: string;
     static BINARY_VALUE_RELATION: string;
@@ -44,5 +47,21 @@ export default abstract class DeviceProfileUtilities {
     static getIntervalNodes(profilId: string, contexId?: string): Promise<SpinalNodeRef[]>;
     static _getBacnetObjectType(type: any): string | number;
     static getProfilContextId(profilId: string): string;
+    static getGlobalMeasureNode(profileId: string): Promise<SpinalNodeRef>;
+    static getGlobalAlarmNode(profileId: string): Promise<SpinalNodeRef>;
+    static getGlobalCommandNode(profileId: string): Promise<SpinalNodeRef>;
+    static getMeasuresDetails(profileId: string): Promise<{}>;
+    static getAlarmsDetails(profileId: string): Promise<{}>;
+    static getCommandsDetails(profileId: string): Promise<{}>;
+    static getGlobalSupervisionDetails(profileId: string): Promise<{
+        measures: any;
+        alarms: any;
+        commands: any;
+    }>;
+    private static _getNodeIntervalDetails;
+    private static _getNodeIntervals;
+    private static _getSharedAttribute;
+    private static _getEndpointsObjectIds;
+    private static _getIDX;
 }
 export { DeviceProfileUtilities };

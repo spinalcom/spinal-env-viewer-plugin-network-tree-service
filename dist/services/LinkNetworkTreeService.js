@@ -32,6 +32,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.LinkNetworkTreeService = void 0;
 const spinal_env_viewer_graph_service_1 = require("spinal-env-viewer-graph-service");
 const DeviceProfileUtilities_1 = require("../utilities/DeviceProfileUtilities");
 const constants_1 = require("../data/constants");
@@ -259,7 +260,7 @@ class LinkNetworkTreeService {
                     const attr = attributes.find(el => el.label.get().trim().toLowerCase() === "namingConvention".toLocaleLowerCase());
                     if (attr) {
                         const value = attr.value.get();
-                        return value.trim().toLowerCase();
+                        return value.toString().trim().toLowerCase();
                     }
                 }
             }

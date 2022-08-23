@@ -297,7 +297,7 @@ export default abstract class LinkNetworkTreeService {
             const attr = attributes.find(el => el.label.get().trim().toLowerCase() === "namingConvention".toLocaleLowerCase());
             if (attr) {
                const value = attr.value.get();
-               return value.trim().toLowerCase()
+               return value.toString().trim().toLowerCase()
             }
          }
 

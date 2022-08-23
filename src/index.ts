@@ -42,6 +42,13 @@ const CONSTANTS = {
    OBJECT_TO_BACNET_ITEM_RELATION
 }
 
+const gRoot: any = typeof window === 'undefined' ? global : window;
+if (typeof gRoot.spinal === 'undefined') gRoot.spinal = {};
+
+if (typeof gRoot.spinal.DeviceProfileUtilities === 'undefined') {
+  gRoot.spinal.DeviceProfileUtilities = DeviceProfileUtilities;
+}
+
 const generateNetworkTreeService: GenerateNetworkTreeService = GenerateNetworkTreeService;
 const linkBmsDeviceService: LinkBmsDeviceService = LinkBmsDeviceService;
 const linkNetworkTreeService: LinkNetworkTreeService = LinkNetworkTreeService;

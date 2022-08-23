@@ -32,6 +32,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.AttributesUtilities = void 0;
 const spinal_env_viewer_bim_manager_service_1 = require("spinal-env-viewer-bim-manager-service");
 const spinal_env_viewer_plugin_documentation_service_1 = require("spinal-env-viewer-plugin-documentation-service");
 const spinal_env_viewer_graph_service_1 = require("spinal-env-viewer-graph-service");

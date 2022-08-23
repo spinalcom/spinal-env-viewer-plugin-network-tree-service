@@ -8,15 +8,21 @@
     "dev": "rm -fr dist && tsc --watch & nodemon dist"
   },
   "dependencies": {
-    "spinal-model-bmsnetwork": "git+https://github.com/spinalcom/spinal-model-bmsnetwork.git",
+    "bacstack": "0.0.1-beta.13",
+    "lodash": "^4.17.21",
+    "spinal-core-connectorjs_type": "git+https://github.com/spinalcom/spinal-core-connectorjs_type.git",
+    "spinal-env-viewer-bim-manager-service": "git+https://github.com/spinalcom/spinal-env-viewer-bim-manager-service.git",
     "spinal-env-viewer-graph-service": "git+https://github.com/spinalcom/Spinal-Graph-Service.git",
-    "spinal-env-viewer-plugin-forge": "git+https://github.com/spinalcom/spinal-env-viewer-plugin-forge.git",
     "spinal-env-viewer-plugin-device_profile": "git+https://github.com/spinalcom/spinal-env-viewer-plugin-device_profile.git",
     "spinal-env-viewer-plugin-documentation-service": "git+https://github.com/spinalcom/spinal-env-viewer-plugin-documentation-service.git",
-    "spinal-core-connectorjs_type": "git+https://github.com/spinalcom/spinal-core-connectorjs_type.git",
-    "bacstack": "0.0.1-beta.13"
+    "spinal-env-viewer-plugin-forge": "git+https://github.com/spinalcom/spinal-env-viewer-plugin-forge.git",
+    "spinal-model-bmsnetwork": "git+https://github.com/spinalcom/spinal-model-bmsnetwork.git"
   },
   "keywords": [],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^18.7.11",
+    "typescript": "^4.7.4"
+  }
 }
