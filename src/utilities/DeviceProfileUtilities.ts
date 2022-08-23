@@ -23,7 +23,7 @@
  */
 
 import { SpinalGraphService, SpinalNodeRef, SPINAL_RELATION_PTR_LST_TYPE } from "spinal-env-viewer-graph-service";
-import { DEVICE_RELATION_NAME, PART_RELATION_NAME } from "spinal-env-viewer-plugin-device_profile/constants";
+import { DEVICE_RELATION_NAME, PART_RELATION_NAME } from "../data/device_profile_constants";
 import { serviceDocumentation } from "spinal-env-viewer-plugin-documentation-service";
 import { ATTRIBUTE_CATEGORY } from "../data/constants";
 import * as bacnet from "bacstack";

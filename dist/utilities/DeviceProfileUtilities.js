@@ -34,9 +34,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DeviceProfileUtilities = void 0;
 const spinal_env_viewer_graph_service_1 = require("spinal-env-viewer-graph-service");
-const constants_1 = require("spinal-env-viewer-plugin-device_profile/constants");
+const device_profile_constants_1 = require("../data/device_profile_constants");
 const spinal_env_viewer_plugin_documentation_service_1 = require("spinal-env-viewer-plugin-documentation-service");
-const constants_2 = require("../data/constants");
+const constants_1 = require("../data/constants");
 const bacnet = require("bacstack");
 const _ = require("lodash");
 class DeviceProfileUtilities {
@@ -45,14 +45,14 @@ class DeviceProfileUtilities {
         return result.map(el => el.info.get());
     }
     static getDeviceProfiles(contextId) {
-        return spinal_env_viewer_graph_service_1.SpinalGraphService.getChildren(contextId, [constants_1.DEVICE_RELATION_NAME]).then((result) => {
+        return spinal_env_viewer_graph_service_1.SpinalGraphService.getChildren(contextId, [device_profile_constants_1.DEVICE_RELATION_NAME]).then((result) => {
             return result.map(el => el.get());
         }).catch((err) => {
             return [];
         });
     }
     static getDevices(profilId) {
-        return spinal_env_viewer_graph_service_1.SpinalGraphService.getChildren(profilId, [constants_1.PART_RELATION_NAME]).then((result) => {
+        return spinal_env_viewer_graph_service_1.SpinalGraphService.getChildren(profilId, [device_profile_constants_1.PART_RELATION_NAME]).then((result) => {
             return result.map(el => el.get());
         }).catch((err) => {
             return [];
@@ -112,7 +112,7 @@ class DeviceProfileUtilities {
             const children = _.flattenDeep(result);
             const promises = children.map((child) => __awaiter(this, void 0, void 0, function* () {
                 const realNode = spinal_env_viewer_graph_service_1.SpinalGraphService.getRealNode(child.id);
-                const attributes = yield spinal_env_viewer_plugin_documentation_service_1.serviceDocumentation.getAttributesByCategory(realNode, constants_2.ATTRIBUTE_CATEGORY);
+                const attributes = yield spinal_env_viewer_plugin_documentation_service_1.serviceDocumentation.getAttributesByCategory(realNode, constants_1.ATTRIBUTE_CATEGORY);
                 // console.log("attributes", attributes)
                 const obj = {
                     nodeId: child.id
@@ -133,7 +133,7 @@ class DeviceProfileUtilities {
             const children = yield spinal_env_viewer_graph_service_1.SpinalGraphService.getChildren((_d = (_c = measures[0]) === null || _c === void 0 ? void 0 : _c.id) === null || _d === void 0 ? void 0 : _d.get(), [this.MEASURE_TO_ITEMS]);
             const promises = children.map((child) => __awaiter(this, void 0, void 0, function* () {
                 const realNode = spinal_env_viewer_graph_service_1.SpinalGraphService.getRealNode(child.id.get());
-                const attributes = yield spinal_env_viewer_plugin_documentation_service_1.serviceDocumentation.getAttributesByCategory(realNode, constants_2.ATTRIBUTE_CATEGORY);
+                const attributes = yield spinal_env_viewer_plugin_documentation_service_1.serviceDocumentation.getAttributesByCategory(realNode, constants_1.ATTRIBUTE_CATEGORY);
                 // console.log("attributes", attributes)
                 const obj = {
                     nodeId: child.id.get(),
