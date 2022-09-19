@@ -278,8 +278,8 @@ class GenerateNetworkTreeService {
         if (attrConfig.isRegex) {
             const flags = attrConfig.flags.join('');
             return eval(`tree.find(element => {
-            const select = config.select.replace('${constants_1.OBJECT_ATTR}', elementAttribute).replace('${constants_1.PLC_ATTR}', element.property);
-            const text = config.text.replace('${constants_1.OBJECT_ATTR}', elementAttribute).replace('${constants_1.PLC_ATTR}', element.property);
+            const select = attrConfig.select.replace('${constants_1.OBJECT_ATTR}', elementAttribute).replace('${constants_1.PLC_ATTR}', element.property);
+            const text = attrConfig.text.replace('${constants_1.OBJECT_ATTR}', elementAttribute).replace('${constants_1.PLC_ATTR}', element.property);
             const regex = new RegExp(text,flags)
             const res = (select + "").match(regex);
             

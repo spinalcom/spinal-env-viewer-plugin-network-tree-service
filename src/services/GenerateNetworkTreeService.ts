@@ -332,8 +332,8 @@ export default abstract class GenerateNetworkTreeService {
          const flags = attrConfig.flags.join('');
 
          return eval(`tree.find(element => {
-            const select = config.select.replace('${OBJECT_ATTR}', elementAttribute).replace('${PLC_ATTR}', element.property);
-            const text = config.text.replace('${OBJECT_ATTR}', elementAttribute).replace('${PLC_ATTR}', element.property);
+            const select = attrConfig.select.replace('${OBJECT_ATTR}', elementAttribute).replace('${PLC_ATTR}', element.property);
+            const text = attrConfig.text.replace('${OBJECT_ATTR}', elementAttribute).replace('${PLC_ATTR}', element.property);
             const regex = new RegExp(text,flags)
             const res = (select + "").match(regex);
             
