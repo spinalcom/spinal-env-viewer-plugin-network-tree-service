@@ -59,53 +59,74 @@ class AttributesUtilities {
                 catInfo.attributes = [];
                 const attributes = yield category.node.getElement();
                 for (let index = 0; index < attributes.length; index++) {
-                    const element = attributes[index];
-                    catInfo.attributes.push(element.get());
+                    const element = attributes[index].get();
+                    element.categoryName = catInfo.name;
+                    catInfo.attributes.push(element);
                 }
                 return catInfo;
             }));
             return Promise.all(promises);
         });
     }
-    static findRevitAttribute(model, dbid, attributeName) {
+    static findRevitAttribute(model, dbid, attribute) {
         return __awaiter(this, void 0, void 0, function* () {
             const attributes = yield this.getRevitAttributes({ model, selection: [dbid] });
+            const attributeName = typeof attribute === "string" ? attribute : attribute.attributeName;
+            const categoryName = typeof attribute !== "string" ? attribute.categoryName : undefined;
             const properties = attributes[0].properties;
             return properties.find(obj => {
+                var _a;
+                if (categoryName && categoryName.toLowerCase() !== ((_a = obj.displayCategory) === null || _a === void 0 ? void 0 : _a.toLowerCase()))
+                    return false;
                 return (obj.displayName.toLowerCase() === attributeName.toLowerCase() || obj.attributeName.toLowerCase() === attributeName.toLowerCase()) && obj.displayValue.toLowerCase() && (obj.displayValue + "").length > 0;
             });
         });
     }
-    static findSpinalAttribute(model, dbid, attributeName) {
+    static findSpinalAttribute(model, dbid, attribute, nodeId) {
         return __awaiter(this, void 0, void 0, function* () {
+            if (nodeId) {
+                return this.findSpinalAttributeById(nodeId, attribute);
+            }
+            // const attributeName = typeof attribute === "string" ? attribute : attribute.attributeName;
+            // const categoryName = typeof attribute !== "string" ? attribute.categoryName : undefined;
             const bimNode = yield bimObjectService.getBIMObject(dbid, model);
             if (typeof bimNode === "undefined")
                 return;
-            const nodeId = bimNode.id.get();
-            const attributes = yield this.getSpinalAttributes(nodeId);
-            for (const obj of attributes) {
-                const found = obj.attributes.find(el => el.label.toLowerCase() === attributeName.toLowerCase());
-                if (found) {
-                    return {
-                        categoryName: obj.name,
-                        categoryId: obj.id,
-                        displayName: found.label,
-                        attributeName: found.label,
-                        displayValue: found.value
-                    };
-                }
-            }
+            nodeId = bimNode.id.get();
+            return this.findSpinalAttributeById(nodeId, attribute);
+            // const attributes = await this.getSpinalAttributes(nodeId);
+            // for (const obj of attributes) {
+            //    const found = obj.attributes.find(el => {
+            //       if (categoryName && categoryName.toLowerCase() !== el.categoryName.toLowerCase()) return false;
+            //       return el.label.toLowerCase() === attributeName.toLowerCase()
+            //    });
+            //    if (found) {
+            //       return {
+            //          categoryName: obj.name,
+            //          categoryId: obj.id,
+            //          displayName: found.label,
+            //          attributeName: found.label,
+            //          displayValue: found.value
+            //       };
+            //    }
+            // }
         });
     }
-    static findSpinalAttributeById(nodeId, attributeName) {
+    static findSpinalAttributeById(nodeId, attribute) {
         return __awaiter(this, void 0, void 0, function* () {
             const bimNode = spinal_env_viewer_graph_service_1.SpinalGraphService.getInfo(nodeId);
             if (typeof bimNode === "undefined")
                 return;
+            const attributeName = typeof attribute === "string" ? attribute : attribute.attributeName;
+            const categoryName = typeof attribute !== "string" ? attribute.categoryName : undefined;
             // const nodeId = bimNode.id.get();
             const attributes = yield this.getSpinalAttributes(nodeId);
             for (const obj of attributes) {
-                const found = obj.attributes.find(el => el.label.toLowerCase() === attributeName.toLowerCase());
+                const found = obj.attributes.find(el => {
+                    if (categoryName && categoryName.toLowerCase() !== el.categoryName.toLowerCase())
+                        return false;
+                    return el.label.toLowerCase() === attributeName.toLowerCase();
+                });
                 if (found) {
                     return {
                         categoryName: obj.name,
@@ -118,12 +139,13 @@ class AttributesUtilities {
             }
         });
     }
-    static findAttribute(model, dbid, attributeName) {
+    static findAttribute(model, dbid, attributeName, nodeId) {
         return __awaiter(this, void 0, void 0, function* () {
-            let attribute = yield this.findSpinalAttribute(model, dbid, attributeName);
+            let attribute = yield this.findSpinalAttribute(model, dbid, attributeName, nodeId);
             if (attribute)
                 return attribute;
-            return this.findRevitAttribute(model, dbid, attributeName);
+            if (model)
+                return this.findRevitAttribute(model, dbid, attributeName);
         });
     }
 }

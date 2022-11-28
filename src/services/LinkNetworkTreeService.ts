@@ -168,7 +168,10 @@ export default abstract class LinkNetworkTreeService {
             const attrs = await DeviceProfileUtilities.getMeasures(profileItem.id);
             for (const attr of attrs) {
                (<any>attr).parentId = automateItem.id;
-               bimDeviceMap.set(`${attr.typeId}_${(parseInt((<any>attr).IDX) + 1)}`, attr);
+               const key = `${attr.typeId}_${(parseInt((<any>attr).IDX) + 1)}`;
+               const value = bimDeviceMap.get(key) || [];
+               value.push(attr);
+               bimDeviceMap.set(key, value);
             }
             return;
          })
@@ -350,10 +353,10 @@ export default abstract class LinkNetworkTreeService {
 
    public static async getBmsDeviceWithTheSameProfil(bimDeviceId: string, profilId: string): Promise<SpinalNodeRef[]> {
       const bmsDevices = await SpinalGraphService.getChildren(bimDeviceId, [SpinalBmsDevice.relationName]);
-      console.log("bmsDevices", bmsDevices)
+      // console.log("bmsDevices", bmsDevices)
       return bmsDevices.filter(device => {
          const ids = SpinalGraphService.getChildrenIds(device.id.get());
-         console.log("ids", ids, profilId);
+         // console.log("ids", ids, profilId);
 
          return ids.findIndex(id => id === profilId) !== -1;
       })

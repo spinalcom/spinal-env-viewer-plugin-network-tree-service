@@ -157,7 +157,10 @@ class LinkNetworkTreeService {
                 const attrs = yield DeviceProfileUtilities_1.DeviceProfileUtilities.getMeasures(profileItem.id);
                 for (const attr of attrs) {
                     attr.parentId = automateItem.id;
-                    bimDeviceMap.set(`${attr.typeId}_${(parseInt(attr.IDX) + 1)}`, attr);
+                    const key = `${attr.typeId}_${(parseInt(attr.IDX) + 1)}`;
+                    const value = bimDeviceMap.get(key) || [];
+                    value.push(attr);
+                    bimDeviceMap.set(key, value);
                 }
                 return;
             }));

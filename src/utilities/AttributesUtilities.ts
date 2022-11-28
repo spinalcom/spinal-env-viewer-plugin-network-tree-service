@@ -31,6 +31,7 @@ import { IAggregateSelection } from "../data/IAggregateSelection";
 import { IForgeProperty } from "../data/IForgeProperty";
 
 import * as _ from "lodash";
+import { IAttribute } from "../data/IBmsConfig";
 
 const g_win: any = typeof window === "undefined" ? global : window;
 const bimObjectService = g_win.spinal.BimObjectService;
@@ -46,7 +47,7 @@ export default abstract class AttributesUtilities {
       }))
    }
 
-   public static async getSpinalAttributes(nodeId: string): Promise<Array<{ [key: string]: any; attributes: Array<{ label: string; value: any }> }>> {
+   public static async getSpinalAttributes(nodeId: string): Promise<Array<{ [key: string]: any; attributes: Array<{ label: string; value: any; categoryName: string }> }>> {
       const realNode = SpinalGraphService.getRealNode(nodeId);
       if (typeof realNode === "undefined") throw new Error("realnode not found");
 
@@ -57,8 +58,9 @@ export default abstract class AttributesUtilities {
 
          const attributes = await category.node.getElement();
          for (let index = 0; index < attributes.length; index++) {
-            const element = attributes[index];
-            catInfo.attributes.push(element.get());
+            const element = attributes[index].get();
+            element.categoryName = catInfo.name;
+            catInfo.attributes.push(element);
          }
 
          return catInfo;
@@ -67,46 +69,71 @@ export default abstract class AttributesUtilities {
       return Promise.all(promises);
    }
 
-   public static async findRevitAttribute(model: any, dbid: number, attributeName: string): Promise<IForgeProperty> {
+   public static async findRevitAttribute(model: any, dbid: number, attribute: string | IAttribute): Promise<IForgeProperty> {
       const attributes = await this.getRevitAttributes({ model, selection: [dbid] });
+      const attributeName = typeof attribute === "string" ? attribute : attribute.attributeName;
+      const categoryName = typeof attribute !== "string" ? attribute.categoryName : undefined;
 
       const properties = attributes[0].properties;
+
+
       return properties.find(obj => {
+         if (categoryName && categoryName.toLowerCase() !== obj.displayCategory?.toLowerCase()) return false;
          return (obj.displayName.toLowerCase() === attributeName.toLowerCase() || obj.attributeName.toLowerCase() === attributeName.toLowerCase()) && obj.displayValue.toLowerCase() && (obj.displayValue + "").length > 0;
       })
    }
 
-   public static async findSpinalAttribute(model: any, dbid: number, attributeName: string): Promise<IForgeProperty> {
+   public static async findSpinalAttribute(model: any, dbid: number, attribute: string | IAttribute, nodeId?: string): Promise<IForgeProperty> {
+
+      if (nodeId) {
+         return this.findSpinalAttributeById(nodeId, attribute);
+      }
+
+      // const attributeName = typeof attribute === "string" ? attribute : attribute.attributeName;
+      // const categoryName = typeof attribute !== "string" ? attribute.categoryName : undefined;
+
       const bimNode = await bimObjectService.getBIMObject(dbid, model);
       if (typeof bimNode === "undefined") return;
+      nodeId = bimNode.id.get();
 
-      const nodeId = bimNode.id.get();
-      const attributes = await this.getSpinalAttributes(nodeId);
+      return this.findSpinalAttributeById(nodeId, attribute);
 
-      for (const obj of attributes) {
-         const found = obj.attributes.find(el => el.label.toLowerCase() === attributeName.toLowerCase());
-         if (found) {
-            return {
-               categoryName: obj.name,
-               categoryId: obj.id,
-               displayName: found.label,
-               attributeName: found.label,
-               displayValue: found.value
-            };
-         }
-      }
+      // const attributes = await this.getSpinalAttributes(nodeId);
+      // for (const obj of attributes) {
+      //    const found = obj.attributes.find(el => {
+      //       if (categoryName && categoryName.toLowerCase() !== el.categoryName.toLowerCase()) return false;
+      //       return el.label.toLowerCase() === attributeName.toLowerCase()
+      //    });
+
+      //    if (found) {
+      //       return {
+      //          categoryName: obj.name,
+      //          categoryId: obj.id,
+      //          displayName: found.label,
+      //          attributeName: found.label,
+      //          displayValue: found.value
+      //       };
+      //    }
+      // }
 
    }
 
-   public static async findSpinalAttributeById(nodeId: string, attributeName: string): Promise<IForgeProperty> {
+   public static async findSpinalAttributeById(nodeId: string, attribute: string | IAttribute): Promise<IForgeProperty> {
       const bimNode = SpinalGraphService.getInfo(nodeId);
       if (typeof bimNode === "undefined") return;
 
+
+      const attributeName = typeof attribute === "string" ? attribute : attribute.attributeName;
+      const categoryName = typeof attribute !== "string" ? attribute.categoryName : undefined;
       // const nodeId = bimNode.id.get();
       const attributes = await this.getSpinalAttributes(nodeId);
 
       for (const obj of attributes) {
-         const found = obj.attributes.find(el => el.label.toLowerCase() === attributeName.toLowerCase());
+         const found = obj.attributes.find(el => {
+            if (categoryName && categoryName.toLowerCase() !== el.categoryName.toLowerCase()) return false;
+            return el.label.toLowerCase() === attributeName.toLowerCase()
+         });
+
          if (found) {
             return {
                categoryName: obj.name,
@@ -119,12 +146,12 @@ export default abstract class AttributesUtilities {
       }
    }
 
-   public static async findAttribute(model: any, dbid: number, attributeName: string): Promise<IForgeProperty> {
-      let attribute = await this.findSpinalAttribute(model, dbid, attributeName);
+   public static async findAttribute(model: any, dbid: number, attributeName: string | IAttribute, nodeId?: string): Promise<IForgeProperty> {
+      let attribute = await this.findSpinalAttribute(model, dbid, attributeName, nodeId);
 
       if (attribute) return attribute;
 
-      return this.findRevitAttribute(model, dbid, attributeName);
+      if (model) return this.findRevitAttribute(model, dbid, attributeName);
    }
 
 }

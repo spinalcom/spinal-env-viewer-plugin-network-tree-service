@@ -1,6 +1,6 @@
 "use strict";
 /*
- * Copyright 2021 SpinalCom - www.spinalcom.com
+ * Copyright 2022 SpinalCom - www.spinalcom.com
  *
  * This file is part of SpinalCore.
  *
@@ -33,12 +33,58 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.LinkBmsDeviceService = void 0;
+/*
+ * Copyright 2021 SpinalCom - www.spinalcom.com
+ *
+ * This file is part of SpinalCore.
+ *
+ * Please read all of the following terms and conditions
+ * of the Free Software license Agreement ("Agreement")
+ * carefully.
+ *
+ * This Agreement is a legally binding contract between
+ * the Licensee (as defined below) and SpinalCom that
+ * sets forth the terms and conditions that govern your
+ * use of the Program. By installing and/or using the
+ * Program, you agree to abide by all the terms and
+ * conditions stated or referenced herein.
+ *
+ * If you do not agree to abide by these terms and
+ * conditions, do not demonstrate your acceptance and do
+ * not install or use the Program.
+ * You should have received a copy of the license along
+ * with this file. If not, see
+ * <http://resources.spinalcom.com/licenses.pdf>.
+ */
 const LinkNetworkTreeService_1 = require("./LinkNetworkTreeService");
 const spinal_env_viewer_graph_service_1 = require("spinal-env-viewer-graph-service");
 const spinal_model_bmsnetwork_1 = require("spinal-model-bmsnetwork");
 const constants_1 = require("../data/constants");
 const DeviceProfileUtilities_1 = require("../utilities/DeviceProfileUtilities");
+const AttributesUtilities_1 = require("../utilities/AttributesUtilities");
 class LinkBmsDeviceService {
+    static LinkBmsDeviceToBimDevicesUsingAttribute(bmsDeviceOpt, bimDeviceOpt) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const [bmsDeviceMap, bimDevicesMap] = yield Promise.all([
+                this.getBmsEndpointsMap(bmsDeviceOpt.contextId, bmsDeviceOpt.deviceId, bmsDeviceOpt.attribute),
+                this.getBimAutomateMap(bimDeviceOpt.nodeId, bimDeviceOpt.model, bimDeviceOpt.attribute)
+            ]);
+            console.log("bimDevicesMap", bimDevicesMap);
+            console.log("bmsDeviceMap", bmsDeviceMap);
+            const bimObj = { key: "id", map: bimDevicesMap };
+            const bmsObj = { key: "id", map: bmsDeviceMap };
+            return this._linkTwoMaps(bimObj, bmsObj, spinal_model_bmsnetwork_1.SpinalBmsEndpoint.relationName, spinal_env_viewer_graph_service_1.SPINAL_RELATION_PTR_LST_TYPE).then((result) => {
+                try {
+                    return spinal_env_viewer_graph_service_1.SpinalGraphService.addChild(bimDeviceOpt.nodeId, bmsDeviceOpt.deviceId, spinal_model_bmsnetwork_1.SpinalBmsDevice.relationName, spinal_env_viewer_graph_service_1.SPINAL_RELATION_PTR_LST_TYPE);
+                }
+                catch (error) {
+                    return false;
+                }
+            }).catch((err) => {
+                return false;
+            });
+        });
+    }
     static LinkBmsDeviceToBimDevices(bmsContextId, bmsDeviceId, bimDeviceId) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
@@ -151,17 +197,52 @@ class LinkBmsDeviceService {
             return false;
         });
     }
-    static getBmsEndpointsMap(bmsContextId, bmsDeviceId) {
+    static getBmsEndpointsMap(bmsContextId, bmsDeviceId, attribute) {
         const bmsDeviceMap = new Map();
-        return spinal_env_viewer_graph_service_1.SpinalGraphService.findInContext(bmsDeviceId, bmsContextId, (node) => {
+        const context = spinal_env_viewer_graph_service_1.SpinalGraphService.getRealNode(bmsContextId);
+        const device = spinal_env_viewer_graph_service_1.SpinalGraphService.getRealNode(bmsDeviceId);
+        if (!context || !device)
+            return Promise.resolve(bmsDeviceMap);
+        return device.findInContextAsyncPredicate(context, (node) => __awaiter(this, void 0, void 0, function* () {
             if (node.getType().get() === spinal_model_bmsnetwork_1.SpinalBmsEndpoint.nodeTypeName) {
+                //@ts-ignore
                 spinal_env_viewer_graph_service_1.SpinalGraphService._addNode(node);
-                bmsDeviceMap.set(`${node.info.typeId.get()}_${node.info.idNetwork.get()}`, node.info.get());
+                let key;
+                if (!attribute) {
+                    // bmsDeviceMap.set(`${node.info.typeId.get()}_${node.info.idNetwork.get()}`, node.info.get());
+                    key = `${node.info.typeId.get()}_${node.info.idNetwork.get()}`;
+                }
+                else {
+                    const attr = yield AttributesUtilities_1.default.findSpinalAttributeById(node.getId().get(), attribute);
+                    key = attr === null || attr === void 0 ? void 0 : attr.displayValue;
+                }
+                if (key) {
+                    let value = bmsDeviceMap.get(key) || [];
+                    value.push(node.info.get());
+                    bmsDeviceMap.set(key, value);
+                }
                 return true;
             }
             return false;
-        }).then(() => {
+        })).then(() => {
             return bmsDeviceMap;
+        });
+    }
+    static getBimAutomateMap(automateId, model, attribute) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const automates = yield LinkNetworkTreeService_1.LinkNetworkTreeService._getAutomateItems(automateId);
+            const map = new Map();
+            yield automates.reduce((prom, item) => __awaiter(this, void 0, void 0, function* () {
+                const liste = yield prom;
+                const attr = yield AttributesUtilities_1.default.findAttribute(model, item.dbid, attribute, item.id);
+                if (attr) {
+                    const value = map.get(attr.displayValue) || [];
+                    value.push(item);
+                    map.set(attr.displayValue, value);
+                }
+                return liste;
+            }), Promise.resolve([]));
+            return map;
         });
     }
     static bmsDevicehasBimDevice(bmsDeviceId) {
@@ -199,17 +280,25 @@ class LinkBmsDeviceService {
         const second = linkFirstToSecond ? map2 : map1;
         const keys = Array.from(first.map.keys());
         const promises = keys.map(key => {
-            const firstElement = first.map.get(key);
-            const secondElement = second.map.get(key);
+            let firstElement = first.map.get(key);
+            let secondElement = second.map.get(key);
             if (firstElement && secondElement) {
-                try {
-                    // return Promise.all([
-                    return spinal_env_viewer_graph_service_1.SpinalGraphService.addChild(firstElement[first.key], secondElement[second.key], relationName, relationType);
-                    // SpinalGraphService.addChild(bmsElement.id, bimElement.nodeId, OBJECT_TO_BACNET_ITEM_RELATION, SPINAL_RELATION_PTR_LST_TYPE)
-                    // ])
-                }
-                catch (error) {
-                }
+                if (!Array.isArray(firstElement))
+                    firstElement = [firstElement];
+                if (!Array.isArray(secondElement))
+                    secondElement = [secondElement];
+                const ids = secondElement.map(el => el[second.key]);
+                return firstElement.reduce((liste, item) => __awaiter(this, void 0, void 0, function* () {
+                    yield this._createOrRemoveRelation(item[first.key], ids, relationName, relationType, true);
+                    return liste;
+                }), Promise.resolve([]));
+                // try {
+                //    // return Promise.all([
+                //    return SpinalGraphService.addChild(firstElement[first.key], secondElement[second.key], relationName, relationType)
+                //    // SpinalGraphService.addChild(bmsElement.id, bimElement.nodeId, OBJECT_TO_BACNET_ITEM_RELATION, SPINAL_RELATION_PTR_LST_TYPE)
+                //    // ])
+                // } catch (error) {
+                // }
             }
         });
         return Promise.all(promises);
@@ -219,20 +308,41 @@ class LinkBmsDeviceService {
         const secondMap = linkFirstToSecond ? map2 : map1;
         const keys = Array.from(firstMap.keys());
         const promises = keys.map(key => {
-            const firstElement = firstMap.get(key);
-            const secondElement = secondMap.get(key);
+            let firstElement = firstMap.get(key);
+            let secondElement = secondMap.get(key);
             if (firstElement && secondElement) {
-                try {
-                    // return Promise.all([
-                    return spinal_env_viewer_graph_service_1.SpinalGraphService.removeChild(firstElement.parentId, secondElement.id, relationName, relationType);
-                    // SpinalGraphService.addChild(bmsElement.id, bimElement.nodeId, OBJECT_TO_BACNET_ITEM_RELATION, SPINAL_RELATION_PTR_LST_TYPE)
-                    // ])
-                }
-                catch (error) {
-                }
+                if (!Array.isArray(firstElement))
+                    firstElement = [firstElement];
+                if (!Array.isArray(secondElement))
+                    secondElement = [secondElement];
+                const ids = secondElement.map(el => el.id);
+                return firstElement.reduce((liste, item) => __awaiter(this, void 0, void 0, function* () {
+                    yield this._createOrRemoveRelation(item.parentId, ids, relationName, relationType, false);
+                    return liste;
+                }), Promise.resolve([]));
+                // try {
+                //    // return Promise.all([
+                //    return SpinalGraphService.addChild(firstElement[first.key], secondElement[second.key], relationName, relationType)
+                //    // SpinalGraphService.addChild(bmsElement.id, bimElement.nodeId, OBJECT_TO_BACNET_ITEM_RELATION, SPINAL_RELATION_PTR_LST_TYPE)
+                //    // ])
+                // } catch (error) {
+                // }
             }
         });
         return Promise.all(promises);
+    }
+    static _createOrRemoveRelation(parentId, childIds, relationName, relationType, create) {
+        if (!Array.isArray(childIds))
+            childIds = [childIds];
+        const promises = childIds.map(el => {
+            try {
+                if (create)
+                    return spinal_env_viewer_graph_service_1.SpinalGraphService.addChild(parentId, el, relationName, relationType);
+                return spinal_env_viewer_graph_service_1.SpinalGraphService.removeChild(parentId, el, relationName, relationType);
+            }
+            catch (error) {
+            }
+        });
     }
 }
 exports.default = LinkBmsDeviceService;
