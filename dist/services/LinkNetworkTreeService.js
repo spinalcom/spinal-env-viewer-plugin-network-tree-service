@@ -303,10 +303,10 @@ class LinkNetworkTreeService {
     static getBmsDeviceWithTheSameProfil(bimDeviceId, profilId) {
         return __awaiter(this, void 0, void 0, function* () {
             const bmsDevices = yield spinal_env_viewer_graph_service_1.SpinalGraphService.getChildren(bimDeviceId, [spinal_model_bmsnetwork_1.SpinalBmsDevice.relationName]);
-            console.log("bmsDevices", bmsDevices);
+            // console.log("bmsDevices", bmsDevices)
             return bmsDevices.filter(device => {
                 const ids = spinal_env_viewer_graph_service_1.SpinalGraphService.getChildrenIds(device.id.get());
-                console.log("ids", ids, profilId);
+                // console.log("ids", ids, profilId);
                 return ids.findIndex(id => id === profilId) !== -1;
             });
         });

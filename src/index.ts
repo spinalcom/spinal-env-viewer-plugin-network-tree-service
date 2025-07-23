@@ -46,7 +46,12 @@ const gRoot: any = typeof window === 'undefined' ? global : window;
 if (typeof gRoot.spinal === 'undefined') gRoot.spinal = {};
 
 if (typeof gRoot.spinal.DeviceProfileUtilities === 'undefined') {
-  gRoot.spinal.DeviceProfileUtilities = DeviceProfileUtilities;
+   gRoot.spinal.DeviceProfileUtilities = DeviceProfileUtilities;
+   gRoot.spinal.GenerateNetworkTreeService = GenerateNetworkTreeService;
+   gRoot.spinal.LinkBmsDeviceService = LinkBmsDeviceService;
+   gRoot.spinal.LinkNetworkTreeService = LinkNetworkTreeService;
+   gRoot.spinal.NetworkTreeService = NetworkTreeService;
+   gRoot.spinal.AttributesUtilities = AttributesUtilities;
 }
 
 const generateNetworkTreeService: GenerateNetworkTreeService = GenerateNetworkTreeService;

@@ -69,8 +69,6 @@ class LinkBmsDeviceService {
                 this.getBmsEndpointsMap(bmsDeviceOpt.contextId, bmsDeviceOpt.deviceId, bmsDeviceOpt.attribute),
                 this.getBimAutomateMap(bimDeviceOpt.nodeId, bimDeviceOpt.model, bimDeviceOpt.attribute)
             ]);
-            console.log("bimDevicesMap", bimDevicesMap);
-            console.log("bmsDeviceMap", bmsDeviceMap);
             const bimObj = { key: "id", map: bimDevicesMap };
             const bmsObj = { key: "id", map: bmsDeviceMap };
             return this._linkTwoMaps(bimObj, bmsObj, spinal_model_bmsnetwork_1.SpinalBmsEndpoint.relationName, spinal_env_viewer_graph_service_1.SPINAL_RELATION_PTR_LST_TYPE).then((result) => {
@@ -98,8 +96,8 @@ class LinkBmsDeviceService {
                     }
                     const [bmsDevicesMap, bimDevicesMap] = yield Promise.all([this.getBmsEndpointsMap(bmsContextId, bmsDeviceId), LinkNetworkTreeService_1.LinkNetworkTreeService._getAutomateItemsMap(bimDeviceId)]);
                     ;
-                    console.log("bmsDevicesMap", bmsDevicesMap);
-                    console.log("bimDevicesMap", bimDevicesMap);
+                    // console.log("bmsDevicesMap", bmsDevicesMap);
+                    // console.log("bimDevicesMap", bimDevicesMap);
                     const bimObj = { key: "parentId", map: bimDevicesMap };
                     const bmsObj = { key: "id", map: bmsDevicesMap };
                     return this._linkTwoMaps(bimObj, bmsObj, spinal_model_bmsnetwork_1.SpinalBmsEndpoint.relationName, spinal_env_viewer_graph_service_1.SPINAL_RELATION_PTR_LST_TYPE).then(() => __awaiter(this, void 0, void 0, function* () {
@@ -126,7 +124,7 @@ class LinkBmsDeviceService {
                 const bmsDeviceMapProm = this.getBmsEndpointsMap(bmsContextId, bmsDeviceId);
                 const bimDeviceMapProm = bimDeviceMap ? Promise.resolve(bimDeviceMap) : LinkNetworkTreeService_1.LinkNetworkTreeService._getAutomateItemsMap(bimDeviceId);
                 const [bmsDevicesMap, bimDevicesMap] = yield Promise.all([bmsDeviceMapProm, bimDeviceMapProm]);
-                console.log("unLinkBmsDeviceToBimDevices", bmsDevicesMap, bimDevicesMap);
+                // console.log("unLinkBmsDeviceToBimDevices", bmsDevicesMap, bimDevicesMap);
                 this._unLinkTwoMaps(bimDevicesMap, bmsDevicesMap, spinal_model_bmsnetwork_1.SpinalBmsDevice.relationName, spinal_env_viewer_graph_service_1.SPINAL_RELATION_PTR_LST_TYPE).then(() => __awaiter(this, void 0, void 0, function* () {
                     // await SpinalGraphService.removeChild(bmsDeviceId, profilId, AUTOMATES_TO_PROFILE_RELATION, SPINAL_RELATION_PTR_LST_TYPE);
                     try {
@@ -254,7 +252,6 @@ class LinkBmsDeviceService {
     }
     static getBacnetProfilLinked(nodeId) {
         return spinal_env_viewer_graph_service_1.SpinalGraphService.getChildren(nodeId, [constants_1.AUTOMATES_TO_PROFILE_RELATION]).then((children) => {
-            console.log("children", children);
             if (children.length > 0)
                 return children[0].id.get();
         });

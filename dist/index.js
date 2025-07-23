@@ -54,6 +54,11 @@ if (typeof gRoot.spinal === 'undefined')
     gRoot.spinal = {};
 if (typeof gRoot.spinal.DeviceProfileUtilities === 'undefined') {
     gRoot.spinal.DeviceProfileUtilities = DeviceProfileUtilities_1.DeviceProfileUtilities;
+    gRoot.spinal.GenerateNetworkTreeService = GenerateNetworkTreeService_1.GenerateNetworkTreeService;
+    gRoot.spinal.LinkBmsDeviceService = LinkBmsDevicesService_1.LinkBmsDeviceService;
+    gRoot.spinal.LinkNetworkTreeService = LinkNetworkTreeService_1.LinkNetworkTreeService;
+    gRoot.spinal.NetworkTreeService = NetworkTreeService_1.NetworkTreeService;
+    gRoot.spinal.AttributesUtilities = AttributesUtilities_1.AttributesUtilities;
 }
 const generateNetworkTreeService = GenerateNetworkTreeService_1.GenerateNetworkTreeService;
 exports.generateNetworkTreeService = generateNetworkTreeService;

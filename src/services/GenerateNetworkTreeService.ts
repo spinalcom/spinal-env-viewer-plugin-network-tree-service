@@ -27,7 +27,7 @@ import * as _ from 'lodash';
 
 import { SpinalGraphService, SpinalNode, SpinalNodeRef, SPINAL_RELATION_PTR_LST_TYPE } from "spinal-env-viewer-graph-service";
 import { serviceDocumentation } from "spinal-env-viewer-plugin-documentation-service";
-import { SpinalAttribute } from "spinal-model-timeseries";
+import { SpinalAttribute } from "spinal-models-documentation";
 
 // import { NetworkTreeService } from "./NetworkTreeService";
 import { Model } from "spinal-core-connectorjs_type";
