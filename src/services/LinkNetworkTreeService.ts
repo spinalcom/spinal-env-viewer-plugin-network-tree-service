@@ -190,42 +190,37 @@ export default abstract class LinkNetworkTreeService {
 
    public static _getFormatedValues(automateInfo: INodeRefObj, virtualAutomates: Array<INodeRefObj>): Promise<IResultClassed> {
 
-      // const devicesModels = await (SpinalGraphService.getChildren(automateId,[NETWORK_BIMOJECT_RELATION]))
+      return Promise.all([this._getAutomateItems(automateInfo.id), this._formatVirtualAutomates(virtualAutomates)])
+         .then(([devices, profilItemsObj]) => {
 
-      return Promise.all([this._getAutomateItems(automateInfo.id), this._formatVirtualAutomates(virtualAutomates)]).then(([devices, profilItemsObj]) => {
+            const res: IResultClassed = { valids: [], invalidAutomateItems: [], invalidProfileItems: [], automate: automateInfo }
+
+            for (const device of devices) {
+               const namingConvention = device.namingConvention;
+
+               if (!namingConvention) {
+                  res.invalidAutomateItems.push(device);
+                  continue;
+               }
 
 
-         const res = { valids: [], invalidAutomateItems: [], invalidProfileItems: [], automate: automateInfo }
+               let found = profilItemsObj[namingConvention];
 
-         // let remainingItems = JSON.parse(JSON.stringify(items))
-
-
-         for (const device of devices) {
-            // let index;
-            // const found = remainingItems.find((el, i) => {
-            //    if (el.namingConvention && el.namingConvention === device.namingConvention) {
-            //       index = i;
-            //       return true;
-            //    }
-            //    return false;
-            // });
-
-            let found = profilItemsObj[device.namingConvention];
-
-            if (found) {
-               // remainingItems.splice(index, 1);
-               delete profilItemsObj[device.namingConvention];
-               res.valids.push({ automateItem: device, profileItem: found });
-            } else {
-               res.invalidAutomateItems.push(device)
+               if (found) {
+                  // comment the line bellow to allow multiple automate items to be linked to the same profil item if they have the same naming convention
+                  // delete profilItemsObj[device.namingConvention]; 
+                  res.valids.push({ automateItem: device, profileItem: found });
+                  console.log("found", device.name, found.name)
+               } else {
+                  res.invalidAutomateItems.push(device)
+               }
             }
-         }
 
-         // res.invalidProfileItems = remainingItems;
-         res.invalidProfileItems = Object.keys(profilItemsObj).map(key => profilItemsObj[key]);
+            // decomment the line bellow to have the list of profil items that are not linked to any automate item because of the naming convention
+            // res.invalidProfileItems = Object.keys(profilItemsObj).map(key => profilItemsObj[key]);
 
-         return res;
-      })
+            return res;
+         })
 
 
    }

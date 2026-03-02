@@ -72,7 +72,7 @@ class GenerateNetworkTreeService {
     }
     static createTree(automates, equipments, attrConfig) {
         return __awaiter(this, void 0, void 0, function* () {
-            return this._getTreeArray(automates, equipments, attrConfig).then(({ tree, valids, invalids }) => __awaiter(this, void 0, void 0, function* () {
+            return this._getTreeArray(automates, equipments, attrConfig).then((_a) => __awaiter(this, [_a], void 0, function* ({ tree, valids, invalids }) {
                 const treeL = yield this._TransformArrayToTree(tree);
                 return {
                     tree: treeL,
@@ -216,8 +216,8 @@ class GenerateNetworkTreeService {
             return obj;
         });
     }
-    static _createBimObjectNode({ dbId, model, color, isAutomate }) {
-        return __awaiter(this, void 0, void 0, function* () {
+    static _createBimObjectNode(_a) {
+        return __awaiter(this, arguments, void 0, function* ({ dbId, model, color, isAutomate }) {
             const element = yield this._getBimObjectName({ dbId, model });
             // const element = elements[0];
             return bimObjectService.createBIMObject(element.dbId, element.name, model).then((node) => {

@@ -126,8 +126,8 @@ class DeviceProfileUtilities {
         });
     }
     static getMeasures(nodeId) {
-        var _a, _b, _c, _d;
         return __awaiter(this, void 0, void 0, function* () {
+            var _a, _b, _c, _d;
             const supervisions = yield spinal_env_viewer_graph_service_1.SpinalGraphService.getChildren(nodeId, [this.ITEMS_TO_SUPERVISION]);
             const measures = yield spinal_env_viewer_graph_service_1.SpinalGraphService.getChildren((_b = (_a = supervisions[0]) === null || _a === void 0 ? void 0 : _a.id) === null || _b === void 0 ? void 0 : _b.get(), [this.SUPERVISION_TO_MEASURES]);
             const children = yield spinal_env_viewer_graph_service_1.SpinalGraphService.getChildren((_d = (_c = measures[0]) === null || _c === void 0 ? void 0 : _c.id) === null || _d === void 0 ? void 0 : _d.get(), [this.MEASURE_TO_ITEMS]);
@@ -356,7 +356,6 @@ class DeviceProfileUtilities {
         });
     }
 }
-exports.default = DeviceProfileUtilities;
 exports.DeviceProfileUtilities = DeviceProfileUtilities;
 DeviceProfileUtilities.DEVICE_PROFILE_CONTEXT_NAME = "deviceProfileContext";
 DeviceProfileUtilities.CONTEXT_TO_ITEM_LIST_RELATION = "hasItemList";
@@ -381,4 +380,5 @@ DeviceProfileUtilities.MEASURE_TO_ITEMS = "hasMeasure";
 DeviceProfileUtilities.BACNET_VALUES_TYPES = ["networkValue", "binaryValue", "analogValue", "multiStateValue"];
 DeviceProfileUtilities.SUPERVISION_INTERVAL_TIME_TYPE = "supervisionIntervalTime";
 DeviceProfileUtilities.profilsMaps = new Map();
+exports.default = DeviceProfileUtilities;
 //# sourceMappingURL=DeviceProfileUtilities.js.map

@@ -97,8 +97,8 @@ class LinkNetworkTreeService {
     }
     ////
     // supprimer un profil d'un automate
-    static unLinkDeviceToProfil(automateId, argProfilId, removeAlsoBmsDevice = false) {
-        return __awaiter(this, void 0, void 0, function* () {
+    static unLinkDeviceToProfil(automateId_1, argProfilId_1) {
+        return __awaiter(this, arguments, void 0, function* (automateId, argProfilId, removeAlsoBmsDevice = false) {
             let profilId = argProfilId;
             if (typeof profilId === "undefined") {
                 profilId = yield this.getProfilLinked(automateId);
@@ -136,8 +136,8 @@ class LinkNetworkTreeService {
         });
     }
     static getDeviceAndProfilData(automateId, argProfilId) {
-        var _a;
         return __awaiter(this, void 0, void 0, function* () {
+            var _a;
             const automateInfo = ((_a = spinal_env_viewer_graph_service_1.SpinalGraphService.getInfo(automateId)) === null || _a === void 0 ? void 0 : _a.get()) || {};
             const res = { valids: [], invalidAutomateItems: [], invalidProfileItems: [], automate: automateInfo };
             const profilId = argProfilId || (yield this.getProfilLinked(automateId));
@@ -153,7 +153,7 @@ class LinkNetworkTreeService {
     static _getAutomateItemsMap(automateId, profilId) {
         const bimDeviceMap = new Map();
         return this.getDeviceAndProfilData(automateId, profilId).then((result) => {
-            const promises = result.valids.map(({ automateItem, profileItem }) => __awaiter(this, void 0, void 0, function* () {
+            const promises = result.valids.map((_a) => __awaiter(this, [_a], void 0, function* ({ automateItem, profileItem }) {
                 const attrs = yield DeviceProfileUtilities_1.DeviceProfileUtilities.getMeasures(profileItem.id);
                 for (const attr of attrs) {
                     attr.parentId = automateItem.id;
@@ -173,31 +173,28 @@ class LinkNetworkTreeService {
     //                              private                                           //
     ////////////////////////////////////////////////////////////////////////////////////
     static _getFormatedValues(automateInfo, virtualAutomates) {
-        // const devicesModels = await (SpinalGraphService.getChildren(automateId,[NETWORK_BIMOJECT_RELATION]))
-        return Promise.all([this._getAutomateItems(automateInfo.id), this._formatVirtualAutomates(virtualAutomates)]).then(([devices, profilItemsObj]) => {
+        return Promise.all([this._getAutomateItems(automateInfo.id), this._formatVirtualAutomates(virtualAutomates)])
+            .then(([devices, profilItemsObj]) => {
             const res = { valids: [], invalidAutomateItems: [], invalidProfileItems: [], automate: automateInfo };
-            // let remainingItems = JSON.parse(JSON.stringify(items))
             for (const device of devices) {
-                // let index;
-                // const found = remainingItems.find((el, i) => {
-                //    if (el.namingConvention && el.namingConvention === device.namingConvention) {
-                //       index = i;
-                //       return true;
-                //    }
-                //    return false;
-                // });
-                let found = profilItemsObj[device.namingConvention];
+                const namingConvention = device.namingConvention;
+                if (!namingConvention) {
+                    res.invalidAutomateItems.push(device);
+                    continue;
+                }
+                let found = profilItemsObj[namingConvention];
                 if (found) {
-                    // remainingItems.splice(index, 1);
-                    delete profilItemsObj[device.namingConvention];
+                    // comment the line bellow to allow multiple automate items to be linked to the same profil item if they have the same naming convention
+                    // delete profilItemsObj[device.namingConvention]; 
                     res.valids.push({ automateItem: device, profileItem: found });
+                    console.log("found", device.name, found.name);
                 }
                 else {
                     res.invalidAutomateItems.push(device);
                 }
             }
-            // res.invalidProfileItems = remainingItems;
-            res.invalidProfileItems = Object.keys(profilItemsObj).map(key => profilItemsObj[key]);
+            // decomment the line bellow to have the list of profil items that are not linked to any automate item because of the naming convention
+            // res.invalidProfileItems = Object.keys(profilItemsObj).map(key => profilItemsObj[key]);
             return res;
         });
     }
