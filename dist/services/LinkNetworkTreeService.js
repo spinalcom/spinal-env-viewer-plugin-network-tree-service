@@ -193,8 +193,8 @@ class LinkNetworkTreeService {
                     res.invalidAutomateItems.push(device);
                 }
             }
-            // decomment the line bellow to have the list of profil items that are not linked to any automate item because of the naming convention
-            // res.invalidProfileItems = Object.keys(profilItemsObj).map(key => profilItemsObj[key]);
+            // 
+            res.invalidProfileItems = Object.keys(profilItemsObj).map(key => profilItemsObj[key]);
             return res;
         });
     }
